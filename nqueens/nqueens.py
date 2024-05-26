@@ -38,9 +38,11 @@ class QueueFrontier(StackFrontier):
 
 class NQueens:
     def __init__(self, n=5):
+        # Initialize the N-Queens problem with a board of size n
         self.n = n
 
     def actions(self, state):
+        # Get the possible actions (positions) for placing the next queen
         queens_pos, attack_cols, attack_pos_diag, attack_neg_diag = state
         queen_row = len(queens_pos)
 
@@ -55,6 +57,7 @@ class NQueens:
         return actions
 
     def result(self, state, action):
+        # Return the new state after performing the given action (placing a queen)
         new_state = copy.deepcopy(state)
         queens_pos, attack_cols, attack_pos_diag, attack_neg_diag = new_state
 
@@ -66,6 +69,7 @@ class NQueens:
         return new_state
 
     def print_state(self, state):
+        # Print the board with queens positions marked
         queens_pos, *_ = state
 
         print()
@@ -78,6 +82,7 @@ class NQueens:
             print()
 
     def solved(self, state):
+        # Check if the state is a solution (all queens are placed)
         queens_pos, *_ = state
 
         if len(queens_pos) != self.n:
@@ -86,22 +91,27 @@ class NQueens:
         return True
 
     def search(self):
+        # Search for a solution
         frontier = StackFrontier()
 
+        # Initial state with no queens placed
         initial_state = ([], [], [], [])
         frontier.add(Node(initial_state, None, None, 0))
 
         explored = []
 
         while True:
+            # If nothing is left in frontier, no solution exists
             if len(frontier.nodes) == 0:
                 raise Exception('No solution')
-            else:
-                print(f'{len(frontier.nodes)} in frontier')
+            # else:
+            #     print(f'{len(frontier.nodes)} in frontier')
 
+            # Pop a node from the frontier
             node = frontier.pop()
             explored.append(node.state)
 
+            # Check if the current state is a solution
             if self.solved(node.state):
                 self.print_state(node.state)
                 print('Solution found')
@@ -109,14 +119,17 @@ class NQueens:
                 print(f'Nodes explored:{len(explored)}')
                 return
 
+            # Expand the node
             for action in self.actions(node.state):
                 new_state = self.result(node.state, action)
                 new_node = Node(new_state, action, node, node.cost + 1)
 
+                # Check if the node is already in the frontier or explored
                 if not frontier.contains(node) and new_node.state not in explored:
                     frontier.add(new_node)
 
 
+# Entry point of the script
 if __name__ == '__main__':
     nqueens = NQueens(9)
     nqueens.search()

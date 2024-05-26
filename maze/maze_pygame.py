@@ -1,23 +1,25 @@
 import sys
-
 import pygame
 
 pygame.init()
 
 
+# Define the Cell class to represent each cell in the maze
 class Cell:
-    size = 20
-    border_width = 1
+    size = 30  # Cells size
+    border_width = 1  # Cells border width
 
     def __init__(self, row, col, is_wall=False, is_start=False, is_goal=False):
-        self.row = row
-        self.col = col
-        self.x = col * Cell.size
-        self.y = row * Cell.size
+        self.row = row  # Row number
+        self.col = col  # Column number
+        self.x = col * Cell.size  # X pos
+        self.y = row * Cell.size  # Y pos
         self.is_wall = is_wall
         self.is_goal = is_goal
+        self.is_start = is_start
 
-        self.color = 'white'
+        # Set the cell color based on its type
+        self.color = 'white'  # empty space color
         if is_wall:
             self.color = 'dimgray'
         elif is_start:
@@ -25,14 +27,18 @@ class Cell:
         elif is_goal:
             self.color = 'blue'
 
-    def draw(self, screen, is_current=False):
-        pygame.draw.rect(screen, 'black', (self.x, self.y, Cell.size, Cell.size))
+    def draw(self, surface, is_current=False):
+        # Draw the outer rectangle (cell border)
+        pygame.draw.rect(surface, 'black', (self.x, self.y, Cell.size, Cell.size))  # Border color: black
+
+        # Draw the inner rectangle (cell itself) with the appropriate color
         inner_size = Cell.size - (Cell.border_width * 2)
-        color = self.color if not is_current else 'green'
-        pygame.draw.rect(screen, color,
+        color = self.color if not is_current else 'green'  # Current cell color: green
+        pygame.draw.rect(surface, color,
                          (self.x + Cell.border_width, self.y + Cell.border_width, inner_size, inner_size))
 
 
+# Define the MazeGame class to manage the maze and game logic
 class MazeGame:
     def __init__(self, maze_filepath):
         with open(maze_filepath) as f:
@@ -46,15 +52,21 @@ class MazeGame:
 
         contents = content.splitlines()
 
+        # Determine number of rows and cols in the maze
         self.rows = len(contents)
-        self.cols = max([len(line) for line in contents])
+        self.cols = max(len(line) for line in contents)
 
+        # Determine size of the game window
         self.width = self.cols * Cell.size
         self.height = self.rows * Cell.size
 
+        # 2D array of all the cells in the maze
         self.cells = []
+
+        # Keep track of the current cell
         self.current_cell = None
 
+        # Initialize the maze cells
         for i in range(self.rows):
             row = []
             for j in range(self.cols):
@@ -78,9 +90,12 @@ class MazeGame:
             self.cells.append(row)
 
     def move(self, direction):
+        # Get current cell row and column
         row, col = self.current_cell.row, self.current_cell.col
-        neighbor = None
 
+        neighbor = None  # Destination cell
+
+        # Determine the neighboring cell based on the direction
         if direction == 'up':
             if row - 1 >= 0:
                 neighbor = self.cells[row - 1][col]
@@ -94,37 +109,45 @@ class MazeGame:
             if col - 1 >= 0:
                 neighbor = self.cells[row][col - 1]
 
+        # Move to the neighbor cell if it's not a wall or outside the maze
         if neighbor is not None and not neighbor.is_wall:
-            self.current_cell = neighbor
+            self.current_cell = neighbor  # Updating current cell
 
     def solved(self):
+        # Check if the current cell is the goal
         return self.current_cell.is_goal
 
-    def draw(self, screen):
+    def draw(self, surface):
+        # Draw all cells in the maze
         for row in self.cells:
             for cell in row:
                 if cell is self.current_cell:
-                    cell.draw(screen, True)
+                    cell.draw(surface, True)
                 else:
-                    cell.draw(screen)
+                    cell.draw(surface)
 
 
-def run(maze_filepath):
-    maze_game = MazeGame(maze_filepath)
+# Function to run the maze game
+def run(filepath):
+    maze_game = MazeGame(filepath)
 
-    pygame.display.set_caption('Maze')
-    screen = pygame.display.set_mode((maze_game.width, maze_game.height))
+    pygame.display.set_caption('Maze')  # Game window caption
+    surface = pygame.display.set_mode((maze_game.width, maze_game.height))  # Window width and height
 
+    # Create the "Solved" text to display when the goal is reached
     solve_font = pygame.font.SysFont("sanscomic", int(maze_game.width / 4))
     solve_text = solve_font.render('Solved', 1, 'blue')
     solve_text_x = (maze_game.width / 2) - (solve_text.get_width() / 2)
     solve_text_y = (maze_game.height / 2) - (solve_text.get_height() / 2)
 
+    # Main game loop
     while True:
         for event in pygame.event.get():
+            # Quit game on closing game window
             if event.type == pygame.QUIT:
                 quit()
 
+            # Get the pressed key and move accordingly
             keys = pygame.key.get_pressed()
             if keys[pygame.K_UP]:
                 maze_game.move('up')
@@ -135,19 +158,20 @@ def run(maze_filepath):
             elif keys[pygame.K_LEFT]:
                 maze_game.move('left')
 
-        #pygame.draw.rect(screen, (0, 0, 0), (0, 0, WIDTH, HEIGHT))
-        maze_game.draw(screen)
+        # Draw the maze and the current state
+        maze_game.draw(surface)
 
+        # Display the "Solved" text if the goal is reached
         if maze_game.solved():
-            screen.blit(solve_text, (solve_text_x, solve_text_y))
+            surface.blit(solve_text, (solve_text_x, solve_text_y))
 
+        # Update the display
         pygame.display.flip()
 
 
+# Entry point of the script
 if __name__ == '__main__':
     if len(sys.argv) == 2:
-        maze_filepath = sys.argv[1]
-        run(maze_filepath)
+        run(sys.argv[1])
     else:
-        maze_filepath = 'maze2.txt'
-        run(maze_filepath)
+        run('maze0.txt')

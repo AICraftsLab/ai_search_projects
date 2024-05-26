@@ -1,8 +1,8 @@
 import copy
 import random
-
 import pygame
 
+# Initialize pygame
 pygame.init()
 
 
@@ -25,29 +25,24 @@ class StackFrontier:
         return self.nodes.pop()
 
     def contains(self, node):
-        for n in self.nodes:
-            if n.state == node.state:
-                return True
-
-        return False
+        return any(n.state == node.state for n in self.nodes)
 
     def is_empty(self):
         return len(self.nodes) == 0
 
 
-class QueueFrontier(StackFrontier):
-    def pop(self):
-        return self.nodes.pop(0)
-
-
 class Puzzle:
     def __init__(self, initial_state):
+        # Initialize the puzzle with the given initial state
         self.initial_state = initial_state
+
+        # Define the solved state of the puzzle
         self.solved_state = [[1, 2, 3, 4],
                              [5, 6, 7, 8],
                              [9, 10, 11, 12],
                              [13, 14, 15, 0]]
 
+        # Check for duplicates and valid numbers in the initial state
         unique_numbers = []
         for row in initial_state:
             for num in row:
@@ -59,18 +54,34 @@ class Puzzle:
                 if num < 0 or num > 15:
                     raise Exception("Numbers must be between 0 and 15")
 
+        # Ensure the puzzle has exactly 16 unique numbers
         if len(unique_numbers) != 16:
             raise Exception("Puzzle must have exactly 16 numbers (0-15)")
 
+    def get_space(self, state):
+        # Get the position of the empty space (0) in the current state
+        for row_index, row in enumerate(state):
+            if 0 not in row:
+                continue
+
+            space_col = row.index(0)
+            space_row = row_index
+
+            return space_row, space_col
+        return None
+
     def actions(self, state):
+        # Generate the list of possible actions from the current state
         actions_list = []
 
         tile_above = tile_below = tile_left = tile_right = None
 
+        # Get the current position of the empty space (0)
         space = self.get_space(state)
         space_row = space[0]
         space_col = space[1]
 
+        # Determine which tiles can be moved into the empty space
         if space_row - 1 >= 0:
             tile_above = state[space_row - 1][space_col]
         if space_row + 1 <= 3:
@@ -169,17 +180,6 @@ class Puzzle:
                 if not frontier.contains(new_node) and new_node.state not in explored:
                     frontier.add(new_node)
 
-    def get_space(self, state):
-        for row_index, row in enumerate(state):
-            if 0 not in row:
-                continue
-
-            space_col = row.index(0)
-            space_row = row_index
-
-            return space_row, space_col
-        return None
-
 
 class Tile:
     size = 80
@@ -213,7 +213,6 @@ class Tile:
 
 class PuzzleGame:
     def __init__(self):
-        self.space = None
         self.size = 4
         self.height = Tile.size * self.size
         self.width = Tile.size * self.size
@@ -282,6 +281,24 @@ class PuzzleGame:
 
         return state
 
+    def set_state(self, state):
+        tiles = []
+        for row in self.tiles:
+            for tile in row:
+                tiles.append(tile)
+
+        self.tiles.clear()
+
+        for i, row in enumerate(state):
+            new_row = []
+            for j, num in enumerate(row):
+                for tile in tiles:
+                    if tile.number == num:
+                        tile.update(i, j)
+                        new_row.append(tile)
+                        break
+            self.tiles.append(new_row)
+
     def populate(self):
         number = 1
         for i in range(self.size):
@@ -317,10 +334,9 @@ def run():
     frontier.add(initial_node)
 
     explored = []
-    solution = None
-    solution_index = 0
+    solved = False
 
-    fps = 2
+    fps = 10
 
     pygame.display.set_caption('15-Puzzle Solver')
     screen = pygame.display.set_mode((puzzle_game.width, puzzle_game.height))
@@ -338,47 +354,41 @@ def run():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 quit()
+        if solved:
+            continue
 
-        # **********************************************
-        if solution is not None:
-            if solution_index == len(solution):
-                continue
-
-            puzzle_game.slide(solution[solution_index][0])
-            solution_index += 1
-
-            screen.fill('black')
-            puzzle_game.draw(screen)
-
-            if solution_index == len(solution):
-                screen.blit(solve_text, (solve_text_x, solve_text_y))
-
-            pygame.display.flip()
-            clock.tick(fps)
-
+        if frontier.is_empty():
+            raise Exception("No Solution")
         else:
-            if frontier.is_empty():
-                raise Exception("No Solution")
-            else:
-                print(f'{len(frontier.nodes)} nodes in frontier')
+            print(f'{len(frontier.nodes)} nodes in frontier')
 
-            node = frontier.pop()
+        node = frontier.pop()
+        puzzle_game.set_state(node.state)
 
-            if puzzle.solved(node.state):
-                solution = puzzle.get_solution(node)
-                print("Solution Found")
-                print(solution)
-                continue
+        if puzzle.solved(node.state):
+            print(puzzle.get_solution(node))
+            print("Solution Found")
+            print(f'Cost:{node.cost}')
+            print(f'Nodes explored:{len(explored)}')
+            solved = True
 
-            explored.append(node.state)
+        explored.append(node.state)
 
-            for action in puzzle.actions(node.state):
-                new_state = puzzle.result(node.state, action)
-                new_node = Node(new_state, node, action, node.cost + 1)
+        for action in puzzle.actions(node.state):
+            new_state = puzzle.result(node.state, action)
+            new_node = Node(new_state, node, action, node.cost + 1)
 
-                if not frontier.contains(new_node) and new_node.state not in explored:
-                    frontier.add(new_node)
-        # **********************************************
+            if not frontier.contains(new_node) and new_node.state not in explored:
+                frontier.add(new_node)
+
+        screen.fill('black')
+        puzzle_game.draw(screen)
+
+        if solved:
+            screen.blit(solve_text, (solve_text_x, solve_text_y))
+
+        pygame.display.flip()
+        clock.tick(fps)
 
 
 if __name__ == '__main__':

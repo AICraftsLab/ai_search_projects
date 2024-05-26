@@ -47,13 +47,6 @@ class StackFrontier:
         """
         return any(n.state == node.state for n in self.nodes)
 
-    # def contains(self, node):
-    #     for n in self.nodes:
-    #         if n.state == node.state:
-    #             return True
-    #
-    #     return False
-
     def is_empty(self):
         """
         Checks if the frontier is empty.
@@ -75,6 +68,12 @@ class StackFrontier:
 
 class QueueFrontier(StackFrontier):
     def pop(self):
+        """
+        Removes and returns the first node from the frontier.
+
+        Returns:
+            The first node from the frontier.
+        """
         return self.nodes.pop(0)
 
 
@@ -87,7 +86,7 @@ class Maze:
             filepath: The path of the file containing the maze.
         """
 
-        # Read file the file
+        # Read the file
         with open(filepath) as f:
             contents = f.read()
 
@@ -107,11 +106,11 @@ class Maze:
 
         # Keep track of walls. Create a 2D list of bools to represent the places where
         # there is a wall in the maze. True for walls, False otherwise.
-        # The maze is expected to be a square maze, so IndexError will be risen when
-        # the length of the lines in the maze in not equal. In that case, False will
+        # The maze is expected to be a rectangular maze, so IndexError will be risen when
+        # the length of the lines in the maze are not equal. In that case, False will
         # be added to that row/line signifying an empty space. Generally, all short
         # lines will be filled with empty spaces to match the length of the maze
-        # (i.e. the longest line) making the maze square.
+        # (i.e. the longest line) making the maze rectangular.
         self.walls = []
         for i in range(self.height):
             row = []
@@ -259,7 +258,7 @@ class Maze:
         explored = []
 
         while True:
-            # If nothing is left in frontier, then no solution
+            # If nothing is left in frontier, no solution exists
             if frontier.is_empty():
                 raise Exception("no solution")
             # else:
@@ -268,7 +267,7 @@ class Maze:
             # Get a node from the frontier
             node = frontier.pop()
 
-            # Checking if the node is the goal
+            # If the node is the goal, print the solution
             if node.state == self.goal:
                 print("Solution Found")
                 print(f'Cost:{node.cost}')
@@ -291,6 +290,7 @@ class Maze:
                     frontier.add(new_node)
 
 
+# Entry point of the script
 if __name__ == '__main__':
     if len(sys.argv) == 2:
         maze = Maze(sys.argv[1])

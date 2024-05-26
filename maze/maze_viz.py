@@ -1,12 +1,11 @@
 import sys
-
 import pygame
 import random
 
 pygame.init()
 
 
-class Node():
+class Node:
     def __init__(self, state, parent, action, cost):
         self.state = state
         self.parent = parent
@@ -22,11 +21,7 @@ class StackFrontier:
         self.nodes.append(node)
 
     def contains(self, node):
-        for n in self.nodes:
-            if n.state == node.state:
-                return True
-
-        return False
+        return any(n.state == node.state for n in self.nodes)
 
     def is_empty(self):
         return len(self.nodes) == 0
@@ -42,7 +37,7 @@ class QueueFrontier(StackFrontier):
 
 class Maze:
     def __init__(self, filename):
-        # Read file and set height and width of maze
+        # Read the file
         with open(filename) as f:
             contents = f.read()
 
@@ -52,8 +47,9 @@ class Maze:
         if contents.count("B") != 1:
             raise Exception("maze must have exactly one goal")
 
-        # Determine height and width of maze
         contents = contents.splitlines()
+
+        # Determine height and width of the maze
         self.height = len(contents)
         self.width = max(len(line) for line in contents)
 
@@ -76,40 +72,6 @@ class Maze:
                 except IndexError:
                     row.append(False)
             self.walls.append(row)
-
-    def print_solved(self, solution):
-        start_row, start_col = self.start
-
-        solution_coordinates = []
-        for action in solution:
-            if action == 'up':
-                start_row -= 1
-                solution_coordinates.append((start_row, start_col))
-            elif action == 'down':
-                start_row += 1
-                solution_coordinates.append((start_row, start_col))
-            elif action == 'right':
-                start_col += 1
-                solution_coordinates.append((start_row, start_col))
-            elif action == 'left':
-                start_col -= 1
-                solution_coordinates.append((start_row, start_col))
-
-        print()
-        for i, row in enumerate(self.walls):
-            for j, col in enumerate(row):
-                if col:
-                    print("#", end="")
-                elif (i, j) == self.start:
-                    print("A", end="")
-                elif (i, j) == self.goal:
-                    print("B", end="")
-                elif (i, j) in solution_coordinates:
-                    print("*", end="")
-                else:
-                    print(" ", end="")
-            print()
-        print()
 
     def actions(self, state):
         actions = []
@@ -151,9 +113,43 @@ class Maze:
         solution.reverse()
         return solution
 
+    def print_solved(self, solution):
+        start_row, start_col = self.start
+
+        solution_coordinates = []
+        for action in solution:
+            if action == 'up':
+                start_row -= 1
+                solution_coordinates.append((start_row, start_col))
+            elif action == 'down':
+                start_row += 1
+                solution_coordinates.append((start_row, start_col))
+            elif action == 'right':
+                start_col += 1
+                solution_coordinates.append((start_row, start_col))
+            elif action == 'left':
+                start_col -= 1
+                solution_coordinates.append((start_row, start_col))
+
+        print()
+        for i, row in enumerate(self.walls):
+            for j, col in enumerate(row):
+                if col:
+                    print("#", end="")
+                elif (i, j) == self.start:
+                    print("A", end="")
+                elif (i, j) == self.goal:
+                    print("B", end="")
+                elif (i, j) in solution_coordinates:
+                    print("*", end="")
+                else:
+                    print(" ", end="")
+            print()
+        print()
+
 
 class Cell:
-    size = 20
+    size = 30
     border_width = 1
 
     def __init__(self, row, col, is_wall=False, is_start=False, is_goal=False):
@@ -173,17 +169,19 @@ class Cell:
         elif is_goal:
             self.color = 'blue'
 
-    def draw(self, screen, is_current=False):
-        pygame.draw.rect(screen, 'black', (self.x, self.y, Cell.size, Cell.size))
+    def draw(self, surface, is_current=False):
+        pygame.draw.rect(surface, 'black', (self.x, self.y, Cell.size, Cell.size))
         inner_size = Cell.size - (Cell.border_width * 2)
         color = self.color if not is_current else 'green'
-        pygame.draw.rect(screen, color,
+        pygame.draw.rect(surface, color,
                          (self.x + Cell.border_width, self.y + Cell.border_width, inner_size, inner_size))
 
+    # Mark this cell as part of the path to the goal
     def set_as_path(self):
         if not self.is_wall and not self.is_goal and not self.is_start:
             self.color = 'yellow'
 
+    # Mark this cell as explored
     def set_as_explored(self):
         if not self.is_wall and not self.is_goal and not self.is_start:
             self.color = 'darkkhaki'
@@ -203,7 +201,7 @@ class MazeGame:
         contents = content.splitlines()
 
         self.rows = len(contents)
-        self.cols = max([len(line) for line in contents])
+        self.cols = max(len(line) for line in contents)
 
         self.width = self.cols * Cell.size
         self.height = self.rows * Cell.size
@@ -256,20 +254,21 @@ class MazeGame:
     def solved(self):
         return self.current_cell.is_goal
 
-    def draw(self, screen):
+    def draw(self, surface):
         for row in self.cells:
             for cell in row:
                 if cell is self.current_cell:
-                    cell.draw(screen, True)
+                    cell.draw(surface, True)
                 else:
-                    cell.draw(screen)
+                    cell.draw(surface)
 
 
 def run(maze_filepath):
+    # Initialize the maze game and maze
     maze_game = MazeGame(maze_filepath)
-
     maze = Maze(maze_filepath)
 
+    # Create the initial node with the start position
     start = Node(maze.start, None, None, 0)
     frontier = StackFrontier()
     frontier.add(start)
@@ -278,52 +277,57 @@ def run(maze_filepath):
     solution = None
     solution_index = 0
 
+    # Setup Pygame display
     pygame.display.set_caption('Maze Solver')
-    screen = pygame.display.set_mode((maze_game.width, maze_game.height))
+    surface = pygame.display.set_mode((maze_game.width, maze_game.height))
     clock = pygame.time.Clock()
-
     fps = 5
 
+    # Create font for "Solved" text
     solve_font = pygame.font.SysFont("sanscomic", int(maze_game.width / 4))
     solve_text = solve_font.render('Solved', 1, 'blue')
     solve_text_x = (maze_game.width / 2) - (solve_text.get_width() / 2)
     solve_text_y = (maze_game.height / 2) - (solve_text.get_height() / 2)
-
-    maze_game.draw(screen)
-    pygame.display.flip()
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 quit()
 
+        # If solution exists, follow it step by step
+        # else, search for the solution
         if solution is not None:
             if solution_index == len(solution):
                 continue
 
+            # Move in the direction specified by the solution
             maze_game.move(solution[solution_index])
+
+            # Mark the cell as part of the path to the goal
             maze_game.current_cell.set_as_path()
 
             solution_index += 1
 
-            maze_game.draw(screen)
+            # Draw the current state of the maze
+            maze_game.draw(surface)
 
+            # Display "Solved" text if the goal is reached
             if maze_game.solved():
-                screen.blit(solve_text, (solve_text_x, solve_text_y))
+                surface.blit(solve_text, (solve_text_x, solve_text_y))
 
-            pygame.display.flip()
-            clock.tick(fps)
+            # pygame.display.flip()
+            # clock.tick(fps)
         else:
-            # If nothing left in frontier, then no path
+            # If nothing left in frontier, no solution exists
             if frontier.is_empty():
                 raise Exception("no solution")
-            else:
-                print(f'{len(frontier.nodes)} nodes in frontier')
+            # else:
+            #     print(f'{len(frontier.nodes)} nodes in frontier')
 
-            # Choose a node from the frontier
+            # Get a node from the frontier
             node = frontier.pop()
 
-            # If node is the goal, then we have a solution
+            # If the node is the goal, print the solution
             if node.state == maze.goal:
                 print("Solution Found")
                 print(f'Cost:{node.cost}')
@@ -333,11 +337,15 @@ def run(maze_filepath):
                 print(solution)
                 continue
 
-            # Mark node as explored
+            # Add node to list of explored nodes
             explored.append(node.state)
-            maze_game.cells[node.state[0]][node.state[1]].set_as_explored()
 
-            # Add neighbors to frontier
+            # Mark the node's cell as explored
+            row = node.state[0]
+            col = node.state[1]
+            maze_game.cells[row][col].set_as_explored()
+
+            # Expand the node
             for action in maze.actions(node.state):
                 new_state = maze.result(node.state, action)
                 new_node = Node(new_state, node, action, node.cost + 1)
@@ -345,18 +353,16 @@ def run(maze_filepath):
                 if not frontier.contains(new_node) and new_node.state not in explored:
                     frontier.add(new_node)
 
-            maze_game.draw(screen)
+            maze_game.draw(surface)
 
-            if maze_game.solved():
-                screen.blit(solve_text, (solve_text_x, solve_text_y))
+        # Update the display
+        pygame.display.flip()
+        clock.tick(fps)
 
-            pygame.display.flip()
 
-
+# Entry point of the script
 if __name__ == '__main__':
     if len(sys.argv) == 2:
-        maze_filepath = sys.argv[1]
-        run(maze_filepath)
+        run(sys.argv[1])
     else:
-        maze_filepath = 'maze5.txt'
-        run(maze_filepath)
+        run('maze0.txt')
