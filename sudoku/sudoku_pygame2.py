@@ -1,11 +1,10 @@
 import pygame
-from sudoku_gen import SudokuGenerator
+from sudoku_dfs import Sudoku, StackFrontier, Node
 
 pygame.init()
 
 
 class Cell:
-    # Class level details
     size = 50
     border_width = 1
     changeable_cell_color = 'green'
@@ -17,16 +16,10 @@ class Cell:
         self.number = number
         self.row = row
         self.col = col
-        self.x = col * Cell.size  # X position
-        self.y = row * Cell.size  # Y position
-
-        # Rect object for the cell
+        self.x = col * Cell.size
+        self.y = row * Cell.size
         self.rect = pygame.Rect(self.x, self.y, Cell.size, Cell.size)
-
-        # Flag to check if the cell is invalid
         self.invalid = False
-
-        # Flag to check if the cell can be changed
         self.changeable = changeable
 
         if changeable:
@@ -35,13 +28,9 @@ class Cell:
             self.color = Cell.nonchangeable_cell_color
 
     def is_clicked(self, click_pos):
-        # Check if the cell is clicked based on the click position
         return self.rect.collidepoint(click_pos)
 
     def set_invalid(self, invalid):
-        # Set the cell text color based on its validity
-
-        # If cell is non-changeable, return
         if not self.changeable:
             return
 
@@ -50,54 +39,78 @@ class Cell:
         else:
             self.color = Cell.changeable_cell_color
 
-    def draw(self, surface):
-        # Draw the cell (border)
-        pygame.draw.rect(surface, 'black', (self.x, self.y, Cell.size, Cell.size))
-
-        # Draw the cell (body)
+    def draw(self, screen):
+        pygame.draw.rect(screen, 'black', (self.x, self.y, Cell.size, Cell.size))
         inner_size = Cell.size - (Cell.border_width * 2)
-        color = 'tan'  # Cell body color
-        pygame.draw.rect(surface, color,
+        color = 'tan'
+        pygame.draw.rect(screen, color,
                          (self.x + Cell.border_width, self.y + Cell.border_width, inner_size, inner_size))
 
-        # Draw the cell (text)
         if self.number != 0:
             cell_num_text = Cell.cell_num_font.render(str(self.number), 1, self.color)
             text_x = self.x + (Cell.size / 2) - (cell_num_text.get_width() / 2)
             text_y = self.y + (Cell.size / 2) - (cell_num_text.get_height() / 2)
-            surface.blit(cell_num_text, (text_x, text_y))
+            screen.blit(cell_num_text, (text_x, text_y))
+
+
+class SudokuGenerator(Sudoku):
+    def __init__(self):
+        initial_state = self.generate_zero_grid()
+        super().__init__(initial_state)
+
+    def generate_zero_grid(self):
+        grid = []
+        for i in range(self.grid_size):
+            grid.append([0 for x in range(self.grid_size)])
+
+        return grid
+
+    def search(self):
+        frontier = StackFrontier()
+
+        frontier.add(Node(self.initial_state, None, None, 0))
+
+        explored = []
+
+        while True:
+            if frontier.is_empty():
+                raise Exception("Error generating puzzle")
+
+            node = frontier.pop()
+
+            if self.solved(node.state):
+                return node.state
+
+            explored.append(node.state)
+
+            for action in self.actions(node.state):
+                new_state = self.result(node.state, action)
+                new_node = Node(new_state, action, node, node.cost + 1)
+
+                if not frontier.contains(new_node) and new_node.state not in explored:
+                    frontier.add(new_node)
 
 
 class SudokuGame:
     def __init__(self):
-        # Initializes the puzzle
+        sudoku = sudoku_gen.Sudoku()
 
-        # Generate a Sudoku puzzle
-        sudoku_gen = SudokuGenerator()
+        self.initial_state = sudoku.initial_state
+        self.grid_size = sudoku.grid_size
+        self.box_size = sudoku.box_size
 
-        # Get the generated grid
-        self.initial_state = sudoku_gen.initial_state
-
-        self.grid_size = sudoku_gen.grid_size
-        self.box_size = sudoku_gen.box_size
-
-        # Width and height of the game screen
         self.width = self.grid_size * Cell.size
         self.height = self.grid_size * Cell.size
 
         self.cells = []
-
-        # Create Cell objects for each position in the grid
         for i, nums_row in enumerate(self.initial_state):
             cells_row = []
             for j, num in enumerate(nums_row):
-                # Changeable if num == 0, otherwise not
                 cell = Cell(num, i, j, num == 0)
                 cells_row.append(cell)
             self.cells.append(cells_row)
 
     def click_cell_at_pos(self, click_pos):
-        # Check which cell is clicked and change its number
         clicked_cell = None
         for row in self.cells:
             for cell in row:
@@ -109,7 +122,7 @@ class SudokuGame:
                 break
 
     def change_cell_number(self, cell):
-        # Increment the cell number cyclically
+
         number = cell.number
 
         number += 1
@@ -119,8 +132,7 @@ class SudokuGame:
 
         cell.number = number
 
-    def get_state(self):
-        # Get the current state of the Sudoku grid
+    def get_grid(self):
         grid = []
         for cells_row in self.cells:
             nums_row = []
@@ -130,16 +142,7 @@ class SudokuGame:
 
         return grid
 
-    def check_validity(self, state, number, position):
-        # Check if the number is valid in its position
-        num_row_validity = self.check_row_validity(state, number, position)
-        num_col_validity = self.check_col_validity(state, number, position)
-        num_box_validity = self.check_box_validity(state, number, position)
-
-        return all([num_row_validity, num_col_validity, num_box_validity])
-
     def check_row_validity(self, state, number, position):
-        # Check if the number is valid in its row
         for i, row in enumerate(state):
             if i == position[0] and row.count(number) == 1:
                 return True
@@ -147,13 +150,11 @@ class SudokuGame:
         return False
 
     def check_col_validity(self, state, number, position):
-        # Check if the number is valid in its column
         col = [row[position[1]] for row in state]
 
         return col.count(number) == 1
 
     def check_box_validity(self, state, number, position):
-        # Check if the number is valid in its sub-grid
         box_row = int(position[0] / self.box_size)
         box_col = int(position[1] / self.box_size)
         box_numbers = []
@@ -169,10 +170,14 @@ class SudokuGame:
 
         return False
 
-    def solved(self):
-        # Check if the Sudoku puzzle is solved. simultaneously
-        # check whether each number is in a valid position
-        state = self.get_state()
+    def check_validity(self, state, number, position):
+        num_row_validity = self.check_row_validity(state, number, position)
+        num_col_validity = self.check_col_validity(state, number, position)
+        num_box_validity = self.check_box_validity(state, number, position)
+
+        return all([num_row_validity, num_col_validity, num_box_validity])
+
+    def solved(self, state):
         solved = True
 
         for i in range(self.grid_size):
@@ -190,48 +195,38 @@ class SudokuGame:
 
         return solved
 
-    def draw(self, surface):
-        # Draw the Sudoku grid
+    def draw(self, screen):
         for row in self.cells:
             for cell in row:
-                cell.draw(surface)
+                cell.draw(screen)
 
 
 def run():
-    # Run the game logic
-    sudoku_game = SudokuGame()  # Create a Sudoku game instance
+    sudoku_game = SudokuGame()
 
-    # Set the display
-    surface = pygame.display.set_mode((sudoku_game.width, sudoku_game.height))
+    screen = pygame.display.set_mode((sudoku_game.width, sudoku_game.height))
     pygame.display.set_caption('Sudoku')
 
-    # Create the "Solved" text to display when the goal is reached
     solve_font = pygame.font.SysFont("sanscomic", int(sudoku_game.width / 4))
     solve_text = solve_font.render('Solved', 1, 'blue')
     solve_text_x = (sudoku_game.width / 2) - (solve_text.get_width() / 2)
     solve_text_y = (sudoku_game.height / 2) - (solve_text.get_height() / 2)
 
-    # Main game loop
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 quit()
 
-            # Get the click event
             if event.type == pygame.MOUSEBUTTONDOWN:
                 sudoku_game.click_cell_at_pos(event.pos)
 
-        # Draw the puzzle
-        sudoku_game.draw(surface)
+        sudoku_game.draw(screen)
 
-        # Display the "Solved" text if the goal is reached
-        if sudoku_game.solved():
-            surface.blit(solve_text, (solve_text_x, solve_text_y))
+        if sudoku_game.solved(sudoku_game.get_grid()):
+            screen.blit(solve_text, (solve_text_x, solve_text_y))
 
-        # Update the display
         pygame.display.flip()
 
 
-# Entry point of the script
 if __name__ == '__main__':
     run()

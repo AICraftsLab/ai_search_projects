@@ -1,38 +1,10 @@
 import sys
 import pygame
 import random
+from frontier import StackFrontier
+from node import Node
 
 pygame.init()
-
-
-class Node:
-    def __init__(self, state, parent, action, cost):
-        self.state = state
-        self.parent = parent
-        self.action = action
-        self.cost = cost
-
-
-class StackFrontier:
-    def __init__(self):
-        self.nodes = []
-
-    def add(self, node):
-        self.nodes.append(node)
-
-    def contains(self, node):
-        return any(n.state == node.state for n in self.nodes)
-
-    def is_empty(self):
-        return len(self.nodes) == 0
-
-    def pop(self):
-        return self.nodes.pop()
-
-
-class QueueFrontier(StackFrontier):
-    def pop(self):
-        return self.nodes.pop(0)
 
 
 class Maze:

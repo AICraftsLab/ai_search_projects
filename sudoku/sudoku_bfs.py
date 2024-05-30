@@ -1,50 +1,59 @@
 import copy
+import math
 import random
-from node import Node
-from frontier import StackFrontier
 
 
-class SudokuGenerator:
-    def __init__(self, complexity='medium'):
-        # Initialize the Sudoku generator with the specified complexity
+class Node:
+    def __init__(self, state, action, parent, cost):
+        self.state = state
+        self.action = action
+        self.parent = parent
+        self.cost = cost
+
+
+class StackFrontier:
+    def __init__(self):
+        self.nodes = []
+
+    def add(self, node):
+        self.nodes.append(node)
+
+    def contains(self, node):
+        for n in self.nodes:
+            if n.state == node.state:
+                return True
+
+        return False
+
+    def is_empty(self):
+        return len(self.nodes) == 0
+
+    def pop(self):
+        return self.nodes.pop()
+
+
+class QueueFrontier(StackFrontier):
+    def pop(self):
+        return self.nodes.pop(0)
+
+
+class Sudoku:
+    def __init__(self, initial_state):
+        self.initial_state = initial_state
+
+        # Define Grid (9x9) and subgrid (3x3) sizes
         self.grid_size = 9
         self.box_size = 3
 
-        # Generate a grid filled with zeros
-        self.initial_state = self.generate_zeros_grid()
+        # Validate that the provided grid is 9x9
+        rows = len(initial_state)
+        cols = len(initial_state[0])
 
-        # Ensure the complexity level is valid, default to 'medium' if not
-        if complexity not in ['easy', 'medium', 'hard']:
-            complexity = 'medium'
+        if rows != self.grid_size or cols != self.grid_size:
+            raise Exception("Invalid grid size: must be 9x9")
 
-        max_zeros = 0
-        min_zeros = 0
-
-        # Set min_zeros and max_zeros for each row based on the complexity
-        if complexity == 'easy':
-            min_zeros = 1
-            max_zeros = int(self.box_size * 1.5)
-        elif complexity == 'medium':
-            min_zeros = self.box_size
-            max_zeros = self.box_size * 2
-        elif complexity == 'hard':
-            min_zeros = self.box_size
-            max_zeros = self.grid_size
-
-        # Generate a fully solved Sudoku grid
-        grid = self.search()
-
-        # Randomly set positions to zero based on complexity
-        for i in range(self.grid_size):
-            zero_num = random.randrange(min_zeros, max_zeros)
-            zero_positions = random.sample([x for x in range(self.grid_size)], k=zero_num)
-
-            for j in range(self.grid_size):
-                if j in zero_positions:
-                    grid[i][j] = 0
-
-        # Update the initial_state
-        self.initial_state = grid
+        if not all(len(row) == self.grid_size for row in initial_state):
+            raise Exception("Invalid grid size: all rows must be equal in size")
 
     def actions(self, state):
         # Determine the possible actions (valid numbers for the next empty cell)
@@ -158,24 +167,16 @@ class SudokuGenerator:
 
         return True
 
-    def print_state(self):
-        # Print the initial state of the Sudoku puzzle
+    def print_state(self, state):
+        # Print the current state of the Sudoku puzzle
         print()
-        for row in self.initial_state:
+        for row in state:
             print(row)
         print()
 
-    def generate_zeros_grid(self):
-        # Generate a grid filled with zeros
-        grid = []
-        for i in range(self.grid_size):
-            grid.append([0 for x in range(self.grid_size)])
-
-        return grid
-
     def search(self):
         # Search for the solution
-        frontier = StackFrontier()
+        frontier = QueueFrontier()
         frontier.add(Node(self.initial_state, None, None, 0))
 
         explored = []
@@ -183,14 +184,19 @@ class SudokuGenerator:
         while True:
             # If the frontier is empty, no solution exists
             if frontier.is_empty():
-                raise Exception("Error while generating puzzle")
+                raise Exception("No solution")
+            else:
+                print(f'{len(frontier.nodes)} nodes in frontier')
 
             # Pop a node from the frontier
             node = frontier.pop()
 
-            # Check if the current state is the solved state,
-            # return the solved puzzle
+            # Check if the current state is the solved state
             if self.solved(node.state):
+                self.print_state(node.state)
+                print('Solution found')
+                print(f'Cost:{node.cost}')
+                print(f'Nodes explored:{len(explored)}')
                 return node.state
 
             # Add the current state to the explored list
@@ -208,5 +214,17 @@ class SudokuGenerator:
 
 # Entry point of the script
 if __name__ == '__main__':
-    generator = SudokuGenerator()
-    generator.print_state()
+    initial_state = [
+        [5, 3, 0, 0, 7, 0, 0, 0, 0],
+        [6, 0, 0, 1, 9, 5, 0, 0, 0],
+        [0, 9, 8, 0, 0, 0, 0, 6, 0],
+        [8, 0, 0, 0, 6, 0, 0, 0, 3],
+        [4, 0, 0, 8, 0, 3, 0, 0, 1],
+        [7, 0, 0, 0, 2, 0, 0, 0, 6],
+        [0, 6, 0, 0, 0, 0, 2, 8, 0],
+        [0, 0, 0, 4, 1, 9, 0, 0, 5],
+        [0, 0, 0, 0, 8, 0, 0, 7, 9]
+    ]
+
+    sudoku = Sudoku(initial_state)
+    sudoku.search()

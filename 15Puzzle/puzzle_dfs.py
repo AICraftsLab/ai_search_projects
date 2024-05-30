@@ -1,30 +1,7 @@
 import copy
 import random
-
-
-class Node:
-    def __init__(self, state, parent, action, cost):
-        self.state = state
-        self.parent = parent
-        self.action = action
-        self.cost = cost
-
-
-class StackFrontier:
-    def __init__(self):
-        self.nodes = []
-
-    def add(self, node):
-        self.nodes.append(node)
-
-    def pop(self):
-        return self.nodes.pop()
-
-    def contains(self, node):
-        return any(n.state == node.state for n in self.nodes)
-
-    def is_empty(self):
-        return len(self.nodes) == 0
+from node import Node
+from frontier import StackFrontier
 
 
 class Puzzle:

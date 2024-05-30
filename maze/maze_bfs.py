@@ -1,80 +1,7 @@
 import sys
 import random
-
-
-class Node:
-    def __init__(self, state, parent, action, cost):
-        """
-        Initializes a node in the search tree.
-
-        Args:
-            state: The state represented by the node.
-            parent: The parent node in the search tree.
-            action: The action taken to reach this node from the parent node.
-            cost: The cost of reaching this node from the root node.
-        """
-        self.state = state
-        self.parent = parent
-        self.action = action
-        self.cost = cost
-
-
-class StackFrontier:
-    def __init__(self):
-        """
-        Initializes the frontier with an empty list of nodes.
-        """
-        self.nodes = []
-
-    def add(self, node):
-        """
-        Adds a node to the frontier.
-
-        Args:
-            node: The node to be added.
-        """
-        self.nodes.append(node)
-
-    def contains(self, node):
-        """
-        Checks if the frontier contains a specific node.
-
-        Args:
-            node: The node to check.
-
-        Returns:
-            True if the node is found in the frontier, False otherwise.
-        """
-        return any(n.state == node.state for n in self.nodes)
-
-    def is_empty(self):
-        """
-        Checks if the frontier is empty.
-
-        Returns:
-            True if the frontier is empty, False otherwise.
-        """
-        return len(self.nodes) == 0
-
-    def pop(self):
-        """
-        Removes and returns the last node from the frontier.
-
-        Returns:
-            The last node from the frontier.
-        """
-        return self.nodes.pop()
-
-
-class QueueFrontier(StackFrontier):
-    def pop(self):
-        """
-        Removes and returns the first node from the frontier.
-
-        Returns:
-            The first node from the frontier.
-        """
-        return self.nodes.pop(0)
+from frontier import QueueFrontier
+from node import Node
 
 
 class Maze:
@@ -252,7 +179,7 @@ class Maze:
         Solves the maze.
         """
         root_node = Node(self.start, None, None, 0)
-        frontier = StackFrontier()
+        frontier = QueueFrontier()
         frontier.add(root_node)
 
         explored = []
