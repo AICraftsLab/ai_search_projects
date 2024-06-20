@@ -14,6 +14,7 @@ class Cell:
     cell_num_font = pygame.font.SysFont("sanscomic", int(size / 1.5))
 
     def __init__(self, number, row, col, changeable=False):
+        #  Initializes a Cell instance
         self.number = number
         self.row = row
         self.col = col
@@ -91,7 +92,7 @@ class SudokuGame:
         for i, nums_row in enumerate(self.initial_state):
             cells_row = []
             for j, num in enumerate(nums_row):
-                # Changeable if num == 0, otherwise not
+                # Changeable if num == 0, esle not
                 cell = Cell(num, i, j, num == 0)
                 cells_row.append(cell)
             self.cells.append(cells_row)
@@ -129,6 +130,27 @@ class SudokuGame:
             grid.append(nums_row)
 
         return grid
+
+    def solved(self):
+        # Check if the Sudoku puzzle is solved. Simultaneously
+        # change the text color of cells based on validity.
+        state = self.get_state()
+        solved = True
+
+        for i in range(self.grid_size):
+            for j in range(self.grid_size):
+                no_zero = state[i].count(0) == 0
+                valid = self.check_validity(state, state[i][j], (i, j))
+
+                if not valid:
+                    self.cells[i][j].set_invalid(True)
+                else:
+                    self.cells[i][j].set_invalid(False)
+
+                if not no_zero or not valid:
+                    solved = False
+
+        return solved
 
     def check_validity(self, state, number, position):
         # Check if the number is valid in its position
@@ -168,27 +190,6 @@ class SudokuGame:
             return True
 
         return False
-
-    def solved(self):
-        # Check if the Sudoku puzzle is solved. simultaneously
-        # check whether each number is in a valid position
-        state = self.get_state()
-        solved = True
-
-        for i in range(self.grid_size):
-            for j in range(self.grid_size):
-                no_zero = state[i].count(0) == 0
-                valid = self.check_validity(state, state[i][j], (i, j))
-
-                if not valid:
-                    self.cells[i][j].set_invalid(True)
-                else:
-                    self.cells[i][j].set_invalid(False)
-
-                if not no_zero or not valid:
-                    solved = False
-
-        return solved
 
     def draw(self, surface):
         # Draw the Sudoku grid

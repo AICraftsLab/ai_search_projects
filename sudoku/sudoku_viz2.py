@@ -3,7 +3,7 @@ import math
 import random
 
 import pygame
-import sudoku_gen
+from sudoku_gen import SudokuGenerator
 
 pygame.init()
 
@@ -200,7 +200,7 @@ class Cell:
 
 class SudokuGame:
     def __init__(self):
-        sudoku = sudoku_gen.Sudoku()
+        sudoku = SudokuGenerator('hard')
 
         self.initial_state = sudoku.initial_state
         self.grid_size = sudoku.grid_size
@@ -329,7 +329,7 @@ def run():
     solve_text_y = (sudoku_game.height / 2) - (solve_text.get_height() / 2)
 
     solved = False
-    fps = 60
+    fps = 2
 
     while True:
         for event in pygame.event.get():

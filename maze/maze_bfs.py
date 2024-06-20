@@ -1,6 +1,6 @@
 import sys
 import random
-from frontier import QueueFrontier
+from frontier import StackFrontier, QueueFrontier
 from node import Node
 
 

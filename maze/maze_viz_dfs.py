@@ -236,7 +236,7 @@ class MazeGame:
 
 
 def run(maze_filepath):
-    # Initialize the maze game and maze
+    # Initialize the maze game and maze solver
     maze_game = MazeGame(maze_filepath)
     maze = Maze(maze_filepath)
 
@@ -269,6 +269,7 @@ def run(maze_filepath):
         # If solution exists, follow it step by step
         # else, search for the solution
         if solution is not None:
+            # If it has finished following the solution steps
             if solution_index == len(solution):
                 continue
 
@@ -287,8 +288,6 @@ def run(maze_filepath):
             if maze_game.solved():
                 surface.blit(solve_text, (solve_text_x, solve_text_y))
 
-            # pygame.display.flip()
-            # clock.tick(fps)
         else:
             # If nothing left in frontier, no solution exists
             if frontier.is_empty():

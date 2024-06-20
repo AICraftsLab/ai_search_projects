@@ -6,7 +6,7 @@ pygame.init()
 
 # Define the Cell class to represent each cell in the maze
 class Cell:
-    size = 30  # Cells size
+    size = 60  # Cells size
     border_width = 1  # Cells border width
 
     def __init__(self, row, col, is_wall=False, is_start=False, is_goal=False):
@@ -174,4 +174,4 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         run(sys.argv[1])
     else:
-        run('maze0.txt')
+        run('maze7.txt')

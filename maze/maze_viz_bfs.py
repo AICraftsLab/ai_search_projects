@@ -1,7 +1,7 @@
 import sys
 import pygame
 import random
-from frontier import QueueFrontier
+from frontier import StackFrontier, QueueFrontier
 from node import Node
 
 pygame.init()
@@ -121,7 +121,7 @@ class Maze:
 
 
 class Cell:
-    size = 30
+    size = 15
     border_width = 1
 
     def __init__(self, row, col, is_wall=False, is_start=False, is_goal=False):
@@ -269,6 +269,7 @@ def run(maze_filepath):
         # If solution exists, follow it step by step
         # else, search for the solution
         if solution is not None:
+            # If it has finished following the solution steps
             if solution_index == len(solution):
                 continue
 
@@ -287,8 +288,6 @@ def run(maze_filepath):
             if maze_game.solved():
                 surface.blit(solve_text, (solve_text_x, solve_text_y))
 
-            # pygame.display.flip()
-            # clock.tick(fps)
         else:
             # If nothing left in frontier, no solution exists
             if frontier.is_empty():
@@ -337,4 +336,4 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         run(sys.argv[1])
     else:
-        run('maze0.txt')
+        run('maze5.txt')

@@ -1,58 +1,35 @@
 import copy
 import random
-
-
-class Node:
-    def __init__(self, state, action, parent, cost):
-        self.state = state
-        self.action = action
-        self.parent = parent
-        self.cost = cost
-
-
-class StackFrontier:
-    def __init__(self):
-        self.nodes = []
-
-    def add(self, node):
-        self.nodes.append(node)
-
-    def contains(self, node):
-        for n in self.nodes:
-            if n.state == node.state:
-                return True
-
-        return False
-
-    def is_empty(self):
-        return len(self.nodes) == 0
-
-    def pop(self):
-        return self.nodes.pop()
-
-
-class QueueFrontier(StackFrontier):
-    def pop(self):
-        return self.nodes.pop(0)
+from node import Node
+from frontier import StackFrontier
 
 
 class NQueens:
     def __init__(self, n=5):
         # Initialize the N-Queens problem with a board of size n
+        if n < 4:
+            raise Exception('n must be greater than 3')
+
         self.n = n
 
     def actions(self, state):
         # Get the possible actions (positions) for placing the next queen
         queens_pos, attack_cols, attack_pos_diag, attack_neg_diag = state
+
+        # Row to place the queen
         queen_row = len(queens_pos)
 
         actions = []
+
+        # Column to place the queen
         for col in range(self.n):
+            # Diagonals of the queen
             pos_diag = queen_row + col
             neg_diag = queen_row - col
             if col not in attack_cols and pos_diag not in attack_pos_diag and neg_diag not in attack_neg_diag:
                 actions.append((queen_row, col))
 
+        # Shuffle actions to introduce randomness
         random.shuffle(actions)
         return actions
 
@@ -95,7 +72,7 @@ class NQueens:
         frontier = StackFrontier()
 
         # Initial state with no queens placed
-        initial_state = ([], [], [], [])
+        initial_state = [[], [], [], []]
         frontier.add(Node(initial_state, None, None, 0))
 
         explored = []
@@ -109,7 +86,6 @@ class NQueens:
 
             # Pop a node from the frontier
             node = frontier.pop()
-            explored.append(node.state)
 
             # Check if the current state is a solution
             if self.solved(node.state):
@@ -118,6 +94,9 @@ class NQueens:
                 print(f'Cost:{node.cost}')
                 print(f'Nodes explored:{len(explored)}')
                 return
+
+            # Add the current state to the explored list
+            explored.append(node.state)
 
             # Expand the node
             for action in self.actions(node.state):
@@ -131,5 +110,5 @@ class NQueens:
 
 # Entry point of the script
 if __name__ == '__main__':
-    nqueens = NQueens(9)
+    nqueens = NQueens()
     nqueens.search()
