@@ -62,10 +62,10 @@ class QueueFrontier(StackFrontier):
 class PriorityQueueFrontier(StackFrontier):
     def add(self, node):
         """
-        Adds a node to the priority queue. The priority is determined by the node's comparison methods.
+        Adds a node to the priority queue. The priority is determined by the node's __lt__ method.
 
         Args:
-            node (Node): The node to be added to the priority queue.
+            node: The node to be added to the priority queue.
         """
         heapq.heappush(self.nodes, node)
 

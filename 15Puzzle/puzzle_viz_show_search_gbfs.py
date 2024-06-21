@@ -1,79 +1,20 @@
 import copy
-import heapq
 import random
-
 import pygame
+from node import Node
+from frontier import PriorityQueueFrontier
 
 pygame.init()
 
 
-class Node:
-    def __init__(self, state, parent, action, cost):
-        self.state = state
-        self.parent = parent
-        self.action = action
-        self.cost = cost
-
-    def manhattan_distance(self):
-        distance = 0
-        for i, row in enumerate(self.state):
-            for j, num in enumerate(row):
-                for k, goal_state_row in enumerate(Puzzle.solved_state):
-                    if num in goal_state_row:
-                        l = goal_state_row.index(num)
-                        row_diff = abs(i - k)
-                        col_diff = abs(j - l)
-                        distance += row_diff + col_diff
-                        break
-
-        return distance
-
-    def __lt__(self, other):
-        return self.manhattan_distance() < other.manhattan_distance()
-
-
-class StackFrontier:
-    def __init__(self):
-        self.nodes = []
-
-    def add(self, node):
-        self.nodes.append(node)
-
-    def pop(self):
-        return self.nodes.pop()
-
-    def contains(self, node):
-        for n in self.nodes:
-            if n.state == node.state:
-                return True
-
-        return False
-
-    def is_empty(self):
-        return len(self.nodes) == 0
-
-
-class QueueFrontier(StackFrontier):
-    def pop(self):
-        return self.nodes.pop(0)
-
-
-class PriorityQueueFrontier(StackFrontier):
-    def add(self, node):
-        heapq.heappush(self.nodes, node)
-
-    def pop(self):
-        return heapq.heappop(self.nodes)
-
-
 class Puzzle:
-    solved_state = [[1, 2, 3, 4],
-                    [5, 6, 7, 8],
-                    [9, 10, 11, 12],
-                    [13, 14, 15, 0]]
-
     def __init__(self, initial_state):
         self.initial_state = initial_state
+
+        self.solved_state = [[1, 2, 3, 4],
+                             [5, 6, 7, 8],
+                             [9, 10, 11, 12],
+                             [13, 14, 15, 0]]
 
         unique_numbers = []
         for row in initial_state:
@@ -356,6 +297,8 @@ def run():
 
     puzzle = Puzzle(initial_state)
 
+    Node.is_puzzle = True
+    Node.goal_state = puzzle.solved_state
     frontier = PriorityQueueFrontier()
     initial_node = Node(initial_state, None, None, 0)
     frontier.add(initial_node)

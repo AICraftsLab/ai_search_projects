@@ -3,65 +3,10 @@ import sys
 
 import pygame
 import random
+from node import Node
+from frontier import PriorityQueueFrontier
 
 pygame.init()
-
-
-class Node():
-    goal_state = None
-
-    def __init__(self, state, parent, action, cost):
-        self.state = state
-        self.parent = parent
-        self.action = action
-        self.cost = cost
-
-    def manhattan_distance(self):
-        if Node.goal_state is None:
-            raise Exception('Goal state is not assigned')
-
-        row_diff = abs(Node.goal_state[0] - self.state[0])
-        col_diff = abs(Node.goal_state[1] - self.state[1])
-        distance = row_diff + col_diff
-
-        return distance
-
-    def __lt__(self, other):
-        return self.manhattan_distance() < other.manhattan_distance()
-
-
-class StackFrontier:
-    def __init__(self):
-        self.nodes = []
-
-    def add(self, node):
-        self.nodes.append(node)
-
-    def contains(self, node):
-        for n in self.nodes:
-            if n.state == node.state:
-                return True
-
-        return False
-
-    def is_empty(self):
-        return len(self.nodes) == 0
-
-    def pop(self):
-        return self.nodes.pop()
-
-
-class QueueFrontier(StackFrontier):
-    def pop(self):
-        return self.nodes.pop(0)
-
-
-class PriorityQueueFrontier(StackFrontier):
-    def add(self, node):
-        heapq.heappush(self.nodes, node)
-
-    def pop(self):
-        return heapq.heappop(self.nodes)
 
 
 class Maze:
