@@ -1,74 +1,11 @@
 import copy
-import heapq
 import random
-
 import pygame
+from node import Node
+from frontier import PriorityQueueFrontier
+
 
 pygame.init()
-
-
-class Node:
-    as_astar = False
-
-    def __init__(self, state, parent, action, cost):
-        self.state = state
-        self.parent = parent
-        self.action = action
-        self.cost = cost
-
-    def manhattan_distance(self):
-        distance = 0
-        for i, row in enumerate(self.state):
-            for j, num in enumerate(row):
-                for k, goal_state_row in enumerate(Puzzle.solved_state):
-                    if num in goal_state_row:
-                        l = goal_state_row.index(num)
-                        row_diff = abs(i - k)
-                        col_diff = abs(j - l)
-                        distance += row_diff + col_diff
-                        break
-
-        return distance
-
-    def __lt__(self, other):
-        if Node.as_astar:
-            return self.manhattan_distance() + self.cost < other.manhattan_distance() + self.cost
-        else:
-            return self.manhattan_distance() < other.manhattan_distance()
-
-
-class StackFrontier:
-    def __init__(self):
-        self.nodes = []
-
-    def add(self, node):
-        self.nodes.append(node)
-
-    def pop(self):
-        return self.nodes.pop()
-
-    def contains(self, node):
-        for n in self.nodes:
-            if n.state == node.state:
-                return True
-
-        return False
-
-    def is_empty(self):
-        return len(self.nodes) == 0
-
-
-class QueueFrontier(StackFrontier):
-    def pop(self):
-        return self.nodes.pop(0)
-
-
-class PriorityQueueFrontier(StackFrontier):
-    def add(self, node):
-        heapq.heappush(self.nodes, node)
-
-    def pop(self):
-        return heapq.heappop(self.nodes)
 
 
 class Puzzle:
@@ -170,7 +107,10 @@ class Puzzle:
         return solution
 
     def search(self):
-        frontier = QueueFrontier()
+        Node.as_astar = True
+        Node.is_puzzle = True
+        Node.goal_state = self.solved_state
+        frontier = PriorityQueueFrontier()
         initial_node = Node(self.initial_state, None, None, 0)
         frontier.add(initial_node)
 
