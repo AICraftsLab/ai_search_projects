@@ -133,6 +133,7 @@ def run(filepath):
 
     pygame.display.set_caption('Maze')  # Game window caption
     surface = pygame.display.set_mode((maze_game.width, maze_game.height))  # Window width and height
+    clock = pygame.time.Clock()  # Clock to control fps
 
     # Create the "Solved" text to display when the goal is reached
     solve_font = pygame.font.SysFont("sanscomic", int(maze_game.width / 4))
@@ -167,6 +168,7 @@ def run(filepath):
 
         # Update the display
         pygame.display.flip()
+        clock.tick(60)
 
 
 # Entry point of the script

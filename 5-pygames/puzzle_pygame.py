@@ -164,6 +164,9 @@ def run():
     pygame.display.set_caption('15-Puzzle')
     surface = pygame.display.set_mode((puzzle_game.width, puzzle_game.height))
 
+    # Clock to control fps
+    clock = pygame.time.Clock()
+
     # Create the "Solved" text to display when the goal is reached
     solve_font = pygame.font.SysFont("sanscomic", int(puzzle_game.width / 4))
     solve_text = solve_font.render('Solved', 1, 'blue')
@@ -199,6 +202,7 @@ def run():
 
         # Update the display
         pygame.display.flip()
+        clock.tick(60)
 
 
 # Entry point of the script

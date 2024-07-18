@@ -166,6 +166,9 @@ def run(n=5):
     surface = pygame.display.set_mode((nqueens_game.width, nqueens_game.height))
     pygame.display.set_caption('N-Queens')
 
+    # Clock to control fps
+    clock = pygame.time.Clock()
+
     # Create the "Solved" text to display when the goal is reached
     solve_font = pygame.font.SysFont("sanscomic", int(nqueens_game.width / 4))
     solve_text = solve_font.render('Solved', 1, 'blue')
@@ -191,6 +194,7 @@ def run(n=5):
 
         # Update the display
         pygame.display.flip()
+        clock.tick(60)
 
 
 # Entry point of the script
