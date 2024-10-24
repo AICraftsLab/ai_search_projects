@@ -7,19 +7,14 @@ import pickle
 from custom_maps import nigeria, africa, world
 
 
-GENERATIONS = 100
-CITIES = 40
+GENERATIONS = 5000
+CITIES = 20
 MAP_SIZE = (300, 300)
-POPULATION = 200
+POPULATION = 100
 ELITISM = 10
 
 TOP_K_RANDOM_SELECTION = POPULATION // 4
 TOURNAMENT_SIZE = POPULATION // 10
-SCRAMBLE_SIZE = int(CITIES * 0.2)
-
-
-def distance(city1, city2):
-    return math.dist(city1.position, city2.position)
 
 
 def plot_solution_interactive(genome, generation, title='', save_path=None):
@@ -63,52 +58,8 @@ def plot_solution_interactive(genome, generation, title='', save_path=None):
         plt.savefig(save_path)
 
 
-def plot_overall_distance_interactive(distances, title=''):
-    plt.figure(2)
-    # Turn on interactive mode
-    if not plt.isinteractive():
-        plt.ion()
-
-    # Clear previous plot
-    plt.clf()
-
-    x_coords = [i for i in range(len(distances))]
-    y_coords = distances
-
-    plt.plot(x_coords, y_coords, linestyle='-')
-
-    # Set plot labels and title
-    plt.xlabel('Generation')
-    plt.ylabel('Overall Distance')
-    plt.title(f'TSP: {len(population.members[0].chromosome)} cities. {title} Generation:{len(distances)}')
-
-    # Pause to update the plot
-    plt.pause(0.1)
-
-
-def plot_compare_overall_distance(experiment_dict, generations, save_path=None):
-    plt.figure()
-
-    x_coords = [i for i in range(generations)]
-
-    for name, data in experiment_dict.items():
-        y_coords = data['distances']
-        plt.plot(x_coords, y_coords, label=name, linestyle='-')
-
-    # Set plot labels and title
-    plt.xlabel('Generation')
-    plt.ylabel('Overall Distance')
-    plt.legend()
-    plt.title(f'TSP Overall Distances.')
-
-    if save_path:
-        plt.savefig(save_path)
-        
-    plt.show()
-
-
 def plot_compare_best_history(experiment_dict, generations, save_path=None):
-    plt.figure()
+    plt.figure(figsize=(10, 7))
 
     for name, data in experiment_dict.items():
         y_coords, x_coords = zip(*data['best_history'])
@@ -136,6 +87,20 @@ def plot_compare_best_history(experiment_dict, generations, save_path=None):
 def stop_interactive_plot():
     plt.ioff()
     plt.show()
+
+
+def distance(city1, city2):
+    return math.dist(city1.position, city2.position)
+
+
+def save_experiment_parameters(path, name, seed, more_info=''):
+    data = f'{name=}\n{seed=}\n{GENERATIONS=}\n{CITIES=}\n' \
+           f'{MAP_SIZE=}\n{POPULATION=}\n{ELITISM=}\n' \
+           f'{TOP_K_RANDOM_SELECTION=}\n{TOURNAMENT_SIZE=}\n' \
+           f'\n{more_info}'
+
+    with open(path, 'w') as f:
+        f.write(data)
 
 
 def print_experiment_summary(exp_dict, save_path):
@@ -295,39 +260,106 @@ class Genome:
 
         return Genome(child1_chromosome), Genome(child2_chromosome)
 
+    @classmethod
+    def partially_mapped_crossover(cls, parent1, parent2):
+        pop = [x for x in range(len(parent1.chromosome))]
+        loci = random.sample(pop, k=2)
+        loci.sort()
+        l1, l2 = loci
+
+        parent1_segment = parent1.chromosome[l1:l2]
+        parent2_segment = parent2.chromosome[l1:l2]
+        mappings = list(zip(parent1_segment, parent2_segment))
+        child1_x = [None] * len(parent1.chromosome)
+        child2_x = [None] * len(parent1.chromosome)
+        child1_x[l1:l2] = parent2_segment
+        child2_x[l1:l2] = parent1_segment
+
+        def get_gene_counterpart(gene, mappings):
+            for mapped_values in mappings:
+                if gene in mapped_values:
+                    gene = mapped_values[0] if mapped_values[0] is not gene else mapped_values[1]
+                    mappings.remove(mapped_values)
+                    return get_gene_counterpart(gene, mappings)
+            return gene
+
+        def fill_chromosome(chromosome, parent_x):
+            for i in range(len(parent_x)):
+                if i < l1 or i >= l2:
+                    gene = parent_x[i]
+                    if gene not in chromosome:
+                        chromosome[i] = gene
+                    else:
+                        chromosome[i] = get_gene_counterpart(gene, mappings.copy())
+
+        fill_chromosome(child1_x, parent1.chromosome)
+        fill_chromosome(child2_x, parent2.chromosome)
+        return Genome(child1_x), Genome(child2_x)
+
+    @classmethod
+    def cycle_crossover(cls, parent1, parent2):
+        index = 0
+        child1_x = [None] * len(parent1.chromosome)
+        child2_x = [None] * len(parent1.chromosome)
+        parent1_first_gene = parent1.chromosome[index]
+        parent1_gene = parent1_first_gene
+        cycled = False
+
+        while not cycled:
+            parent2_gene = parent2.chromosome[index]
+            child1_x[index] = parent1_gene
+            child2_x[index] = parent2_gene
+
+            index = parent2.chromosome.index(parent1_gene)
+            parent1_gene = parent1.chromosome[index]
+            cycled = parent1_gene == parent1_first_gene
+
+        def fill_chromosome(chromosome, parent):
+            for i in range(len(chromosome)):
+                gene = chromosome[i]
+                if gene is None:
+                    chromosome[i] = parent[i]
+
+        fill_chromosome(child1_x, parent2.chromosome)
+        fill_chromosome(child2_x, parent1.chromosome)
+
+        return Genome(child1_x), Genome(child2_x)
+
 
 class Population:
     def __init__(self, size, map):
         self.size = size
         self.map = map
-        self.members = None
-        self.best = None
-
-    def generate_members(self, s_type='roulette', m_type='swap'):
-        if self.members is None:
-            self._initialize()
-            return
-
-        parents = self._select_parents(self.size - ELITISM, type=s_type)
-        new_members = []
-        for i in range(self.size - ELITISM):
-            parent = parents[i]
-            offspring = parent.replicate()
-            # offspring = Genome.order_crossover(parents[i], parents[i+1])
-            offspring.mutate(type=m_type)
-            new_members.append(offspring)
-
-        sorted_members = self._sort_members()
-        new_members.extend(sorted_members[-ELITISM:])
-
-        self.best = sorted_members[-1]
-        self.members = new_members
+        self.members = []
+        self._initialize()
 
     def _initialize(self):
-        self.members = []
         for i in range(self.size):
             genome = Genome(random.sample(self.map.cities, self.map.cities_n))
             self.members.append(genome)
+
+    def generate_next_generation(self, s_type='roulette', m_type='swap'):
+        next_gen_members = []
+        parents_n = self.size * 2 - ELITISM
+        parents = self._select_parents(parents_n, type=s_type)
+
+        for i in range(0, parents_n, 2):
+            parent1 = parents[i]
+            parent2 = parents[i + 1]
+            # child1, child2 = Genome.order_crossover(parent1, parent2)
+            # child1, child2 = Genome.partially_mapped_crossover(parent1, parent2)
+            child1, child2 = Genome.cycle_crossover(parent1, parent2)
+            child1.mutate(type=m_type)
+            child2.mutate(type=m_type)
+            next_gen_members.append(child1)
+            next_gen_members.append(child2)
+
+        sorted_members = self._sort_members()
+        next_gen_members.extend(sorted_members[-ELITISM:])
+
+        self.members = next_gen_members
+
+        return sorted_members[-1]
 
     def _sort_members(self):
         members = [(m, m.get_fitness()) for m in self.members]
@@ -344,7 +376,7 @@ class Population:
 
         return parents
 
-    def _roulette_selection(self, n, **kwargs):
+    def _roulette_selection(self, n):
         members_fitness = [m.get_fitness() for m in self.members]
         fitness_sum = sum(members_fitness)
         probs = [x / fitness_sum for x in members_fitness]
@@ -352,7 +384,7 @@ class Population:
 
         return parents
 
-    def _rank_selection(self, n, **kwargs):
+    def _rank_selection(self, n):
         members = self._sort_members()
 
         size = len(members)
@@ -396,10 +428,13 @@ class Population:
 
 
 if __name__ == '__main__':
-    seed = 12.7
-    experiment_path = 'test'
-    os.makedirs(experiment_path, exist_ok=True)
+    seed = 18
+    experiment_name = 'africa_pmx'
+    os.makedirs(experiment_name, exist_ok=True)
     random.seed(seed)
+
+    params_file = os.path.join(experiment_name, 'parameters.txt')
+    save_experiment_parameters(params_file, experiment_name, seed)
 
     # map = Map.from_coordinates_tuples(nigeria)
     # map = Map.from_coordinates_tuples(africa)
@@ -419,23 +454,21 @@ if __name__ == '__main__':
             best_history = []
 
             for i in range(GENERATIONS):
-                population.generate_members(s_type=s_type, m_type=m_type)
-                best = population.best
+                best = population.generate_next_generation(s_type=s_type, m_type=m_type)
 
-                if best is not None:
-                    best_genome_fitness = best.get_fitness()
-                    if best_genome_fitness > best_fitness:
-                        best_fitness = best_genome_fitness
-                        best_fitness_generation = i
-                        best_history.append((round(1 / best_fitness, 2), best_fitness_generation))
+                best_genome_fitness = best.get_fitness()
+                if best_genome_fitness > best_fitness:
+                    best_fitness = best_genome_fitness
+                    best_fitness_generation = i
+                    best_history.append((round(1 / best_fitness, 2), best_fitness_generation))
 
-                    if i == 1 or i % 100 == 0 or i == GENERATIONS - 1:
-                        plot_solution_interactive(best, generation=i, title=title)
+                if i % 100 == 0 or i == GENERATIONS - 1:
+                    plot_solution_interactive(best, generation=i, title=title)
 
-                    if i == GENERATIONS - 1:
-                        filename = title + '.png'
-                        plot_solution_interactive(best, generation=best_fitness_generation, title=title)
-                        plt.savefig(os.path.join(experiment_path, filename))
+                if i == GENERATIONS - 1:
+                    filename = title + '.png'
+                    plot_solution_interactive(best, generation=best_fitness_generation, title=title)
+                    plt.savefig(os.path.join(experiment_name, filename))
 
             experiment_dict[title] = dict(best_history=best_history, best=best, best_fitness=best_fitness,
                                           best_fitness_gen=best_fitness_generation)
@@ -446,9 +479,9 @@ if __name__ == '__main__':
             print(title, 'Generation:', best_fitness_generation, best)
         print()
     
-    best_solution_filepath = os.path.join(experiment_path, 'best.png')
-    compare_best_filepath = os.path.join(experiment_path, 'best_solutions.png')
-    experiment_summary_path = os.path.join(experiment_path, 'summary.txt')
+    best_solution_filepath = os.path.join(experiment_name, 'best.png')
+    compare_best_filepath = os.path.join(experiment_name, 'best_solutions.png')
+    experiment_summary_path = os.path.join(experiment_name, 'summary.txt')
 
     print_experiment_summary(experiment_dict, save_path=experiment_summary_path)
     plot_solution_interactive(top_best, generation=-1, save_path=best_solution_filepath)

@@ -7,8 +7,8 @@ import pickle
 from custom_maps import nigeria, africa, world
 
 
-GENERATIONS = 30000
-CITIES = 20
+GENERATIONS = 3000
+CITIES = 50
 MAP_SIZE = (600, 600)
 POPULATION = 500
 ELITISM = 10
@@ -291,7 +291,7 @@ class Population:
     def _initialize(self):
         self.members = []
         for i in range(self.size):
-            genome = Genome(random.sample(self.map.cities, self.map.num))
+            genome = Genome(random.sample(self.map.cities, self.map.cities_n))
             self.members.append(genome)
 
     def _select_best_members(self, n):
@@ -313,19 +313,19 @@ class Population:
 
 
 if __name__ == '__main__':
-    experiment_path = 'africa2_30k'
+    experiment_path = 'test_city25'
     os.makedirs(experiment_path, exist_ok=True)
-    random.seed(15)
+    random.seed(125)
 
     # map = Map.from_coordinates_tuples(nigeria)
-    map = Map.from_coordinates_tuples(africa)
+    # map = Map.from_coordinates_tuples(africa)
     # map = Map.from_coordinates_tuples(world)
-    # map = Map(CITIES)
+    map = Map(CITIES)
 
     best_of_best = (0, None, 0, 0)
     experiment_dict = {}
 
-    for mutation_prob in [0.001, 0.005, 0.008 ,0.01]:
+    for mutation_prob in [0.001, 0.005, 0.008 ,0.01, 0.05, 0.1, 0.15]:
     # for mutation_prob in [0.01, 0.02, 0.03, 0.05, 0.08, 0.1, 0.15, 0.2]:
         population = Population(POPULATION, map)
         best_fitness, best_fitness_generation = 0, 0
