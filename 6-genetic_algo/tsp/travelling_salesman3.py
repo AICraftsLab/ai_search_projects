@@ -8,7 +8,7 @@ from custom_maps import nigeria, africa, world
 
 
 GENERATIONS = 5000
-CITIES = 20
+CITIES = 25
 MAP_SIZE = (300, 300)
 POPULATION = 100
 ELITISM = 10
@@ -429,7 +429,7 @@ class Population:
 
 if __name__ == '__main__':
     seed = 18
-    experiment_name = 'africa_pmx'
+    experiment_name = 'africa_cx'
     os.makedirs(experiment_name, exist_ok=True)
     random.seed(seed)
 
@@ -437,9 +437,9 @@ if __name__ == '__main__':
     save_experiment_parameters(params_file, experiment_name, seed)
 
     # map = Map.from_coordinates_tuples(nigeria)
-    # map = Map.from_coordinates_tuples(africa)
+    map = Map.from_coordinates_tuples(africa)
     # map = Map.from_coordinates_tuples(world)
-    map = Map(CITIES)
+    # map = Map(CITIES)
 
     top_best = None
     top_best_fitness = 0
