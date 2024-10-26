@@ -1,16 +1,16 @@
 import random
+from pprint import pprint
 
 import matplotlib.pyplot as plt
 
-GENERATIONS = 5000
+GENERATIONS = 1000
 POPULATION = 100
-MUTATION_PROB = 0.1
+MUTATION_PROB = 0.01
 ELITISM = 10
 
 TOP_K_RANDOM_SELECTION = POPULATION // 4
 TOURNAMENT_SIZE = POPULATION // 10
 COLORS = [(random.random(), random.random(), random.random()) for _ in range(50)]
-
 
 
 def draw_graph(graph, vertices_pos=None):
@@ -71,6 +71,18 @@ def turn_off_interactive():
     plt.show()
 
 
+def create_timetable(timetable_dict, solution):
+    timetable = {period: [] for period in timetable_dict['periods']}
+
+    for course_idx, period_idx in enumerate(solution):
+        period = timetable_dict['periods'][period_idx]
+        course = timetable_dict['courses'][course_idx]
+
+        timetable[period].append(course)
+
+    return timetable
+
+
 class Graph:
     def __init__(self, graph_dict, chromatic_number, vertices_pos=None):
         self.chromatic_number = chromatic_number
@@ -102,7 +114,7 @@ class Genome:
             if color not in unique_colors:
                 unique_colors.append(color)
         self.num = len(unique_colors)
-        return 3 / conflicts + 1 / len(unique_colors)
+        return 3 / conflicts #+ 1 / len(unique_colors)
 
     def mutate(self, prob, allele):
         for i in range(len(self.chromosome)):
@@ -172,26 +184,6 @@ class Population:
 
 if __name__ == '__main__':
     graph_dict = {
-        1: [2, 6, 4, 13, 15, 16],
-        2: [6, 1, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
-        3: [2, 6, 7, 5, 9, 13, 14],
-        4: [2, 6, 13, 12, 16, 10, 15, 1],
-        5: [2, 6, 11, 3, 8, 7, 9, 13, 14, 17],
-        6: [2, 1, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
-        7: [2, 6, 8, 9, 14, 11, 5, 3, 13, 17],
-        8: [2, 6, 5, 7, 13, 14],
-        9: [2, 6, 3, 5, 7, 13, 14],
-        10: [2, 6, 4, 12, 15],
-        11: [2, 6, 5, 7, 14, 17],
-        12: [2, 6, 10, 15, 4],
-        13: [2, 6, 1, 3, 4, 5, 7, 8, 9, 14, 15, 16],
-        14: [2, 6, 3, 5, 7, 8, 9, 11, 17, 13],
-        15: [2, 6, 1, 4, 10, 13, 12, 16],
-        16: [2, 6, 1, 13, 4, 15],
-        17: [2, 6, 5, 7, 11, 14],
-    }
-    
-    graph_dict = {
         0: [1, 5, 3, 12, 14, 15],
         1: [5, 0, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
         2: [1, 5, 6, 4, 8, 12, 13],
@@ -210,17 +202,34 @@ if __name__ == '__main__':
         15: [1, 5, 0, 12, 3, 14],
         16: [1, 5, 4, 6, 10, 13],
     }
-#    d = {}
-#    for node, neighbors in graph_dict.items():
-#        n_node = node - 1
-#        l = []
-#        for n in neighbors:
-#            l.append(n - 1)
-#        d[n_node] = l
-#        
-#    print(d)
-#    quit()
-    #pos = [(0, 0), (10, 0), (20, 0), (10, 10), (0, 20), (10, 20), (20, 20)]
+
+    timetable_dict = {
+        'periods': ['Mon 8-10am', 'Mon 11-1pm', 'Mon 1:45-3:45pm', 'Mon 4-6pm',
+                    'Tue 8-10am', 'Tue 11-1pm', 'Tue 1:45-3:45pm', 'Tue 4-6pm',
+                    'Wed 8-10am', 'Wed 11-1pm', 'Wed 1:45-3:45pm', 'Wed 4-6pm',
+                    'Thu 8-10am', 'Thu 11-1pm', 'Thu 1:45-3:45pm', 'Thu 4-6pm',
+                    'Fri 8-10am', 'Fri 11-1pm', 'Fri 1:45-3:45pm', 'Fri 4-6pm',
+                    ],
+        'courses': {0: ('ITC2203', 'ITC', 'INS'),
+                    1: ('GEN2203', 'ALL'),
+                    2: ('CYB2203', 'CBS'),
+                    3: ('CSC2303', 'GROUP B'),
+                    4: ('CSC2303', 'GROUP A'),
+                    5: ('GEN2201', 'ALL'),
+                    6: ('MTH2301', 'GROUP A'),
+                    7: ('CSC2201', 'CSC'),
+                    8: ('CYB2301', 'CBS'),
+                    9: ('MTH2301', 'GROUP B'),
+                    10: ('DTS2303', 'DTS'),
+                    11: ('SWE2305', 'SWE'),
+                    12: ('ITC2201', 'CSC', 'ITC', 'CBS', 'INS'),
+                    13: ('CSC2305', 'GROUP A'),
+                    14: ('CSC2305', 'GROUP B'),
+                    15: ('STA121', 'INS'),
+                    16: ('DTS2301', 'DTS')
+                    }
+    }
+
     graph = Graph(graph_dict, 19)
     population = Population(POPULATION, graph)
 
@@ -230,4 +239,7 @@ if __name__ == '__main__':
         if i % 25 == 0 or i == GENERATIONS - 1:
             draw_graph_interactive(graph, best.chromosome, i, graph.vertices_pos)
             print(i, round(best.get_fitness(graph), 2), best.chromosome, best.num)
+
+    timetable = create_timetable(timetable_dict, best.chromosome)
+    pprint(timetable)
     turn_off_interactive()
