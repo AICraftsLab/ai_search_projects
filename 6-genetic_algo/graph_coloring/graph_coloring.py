@@ -1,7 +1,7 @@
 import random
-
 import matplotlib.pyplot as plt
 
+# Problem global variables 
 GENERATIONS = 1000
 POPULATION = 100
 MUTATION_PROB = 0.01
@@ -69,8 +69,9 @@ def turn_off_interactive():
 
 
 class Graph:
+    """Class to represent graph"""
     def __init__(self, graph_dict, chromatic_number, vertices_pos=None):
-        self.chromatic_number = chromatic_number
+        self.chromatic_num = chromatic_number
         self.graph_dict = graph_dict
         self.vertices = len(self.graph_dict)
 
@@ -83,7 +84,7 @@ class Graph:
 class Genome:
     def __init__(self, chromosome):
         self.chromosome = chromosome
-        self.num = 0
+        self.chromatic_num = 0
 
     def get_fitness(self, graph):
         conflicts = 1
@@ -98,7 +99,7 @@ class Genome:
         for color in self.chromosome:
             if color not in unique_colors:
                 unique_colors.append(color)
-        self.num = len(unique_colors)
+        self.chromatic_num = len(unique_colors)
         return 3 / conflicts + 1 / len(unique_colors)
 
     def mutate(self, prob, allele):
@@ -132,7 +133,7 @@ class Population:
 
     def _initialize(self):
         for i in range(self.size):
-            chromosome = [random.randrange(self.graph.chromatic_number) for x in range(self.graph.vertices)]
+            chromosome = [random.randrange(self.graph.chromatic_num) for x in range(self.graph.vertices)]
             self.members.append(Genome(chromosome))
 
     def _top_k_random_selection(self, n, k):
@@ -153,8 +154,8 @@ class Population:
             parent1 = parents[i]
             parent2 = parents[i + 1]
             child1, child2 = Genome.crossover(parent1, parent2)
-            child1.mutate(MUTATION_PROB, range(self.graph.chromatic_number))
-            child2.mutate(MUTATION_PROB, range(self.graph.chromatic_number))
+            child1.mutate(MUTATION_PROB, range(self.graph.chromatic_num))
+            child2.mutate(MUTATION_PROB, range(self.graph.chromatic_num))
             generation_members.append(child1)
             generation_members.append(child2)
 
@@ -195,5 +196,5 @@ if __name__ == '__main__':
     for i in range(GENERATIONS):
         best = population.generate_next_generation()
         draw_graph_interactive(graph, best.chromosome, graph.vertices_pos)
-        print(i, best.get_fitness(graph), best.chromosome, best.num)
+        print(i, best.get_fitness(graph), best.chromosome, best.chromatic_num)
     turn_off_interactive()
