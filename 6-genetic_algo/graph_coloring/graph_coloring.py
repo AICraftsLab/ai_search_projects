@@ -36,7 +36,7 @@ def draw_graph(graph, vertices_pos=None):
     plt.show()
 
 
-def draw_graph_interactive(graph, chromosome, vertices_pos):
+def draw_graph_interactive(graph, chromosome, vertices_pos, title):
     if not plt.isinteractive():
         plt.ion()
 
@@ -60,6 +60,7 @@ def draw_graph_interactive(graph, chromosome, vertices_pos):
         plt.plot(x_coords, y_coords, color='red', linewidth=1, zorder=0)
         plt.annotate(str(vertex), (vertex_pos[0], vertex_pos[1]), textcoords="offset points", xytext=(0, 10), ha='center')
 
+    plt.title(title)
     plt.pause(0.01)
 
 
@@ -80,6 +81,28 @@ class Graph:
         else:
             self.vertices_pos = [(random.randrange(100), random.randrange(100)) for _ in range(self.vertices)]
 
+    @classmethod
+    def random_graph(cls, vertices, chromatic_num, max_conn, min_conn=1):
+        assert min_conn > 0 and min_conn < max_conn, "Invalid Min connections must be 0 < min_conn < max_conn"
+        assert max_conn <= vertices, "Max connections must be <= vertices"
+        
+        graph_dict = {i: set() for i in range(vertices)}
+        
+        for vertex, connections in graph_dict.items():
+            neighbors_n = random.randrange(min_conn, max_conn)
+            while len(connections) < neighbors_n:  # TODO: bug without this line,  vertex with no connections
+                sampling_pop = list(range(vertices))
+                sampling_pop.remove(vertex)
+                neighbors = random.sample(sampling_pop, k=neighbors_n)
+                
+                for neighbor in neighbors:
+                    neighbor_conn = graph_dict[neighbor]
+                    if len(connections) < max_conn and len(neighbor_conn) < max_conn:
+                        connections.add(neighbor)
+                        neighbor_conn.add(vertex)
+        print(graph_dict)
+        
+        return Graph(graph_dict, chromatic_num)
 
 class Genome:
     def __init__(self, chromosome):
@@ -136,19 +159,75 @@ class Population:
             chromosome = [random.randrange(self.graph.chromatic_num) for x in range(self.graph.vertices)]
             self.members.append(Genome(chromosome))
 
-    def _top_k_random_selection(self, n, k):
+    def _sort_members(self):
         key = lambda x: x.get_fitness(self.graph)
         members = sorted(self.members, key=key, reverse=True)
-        members = members[:k]
+        
+        return members
 
-        parents = random.choices(members, k=n)
+    def _top_k_random_selection(self, n, k):
+        members = self._sort_members()
+        top_k = members[:k]
+        parents = random.choices(top_k, k=n)
+
         return parents
 
-    def generate_next_generation(self):
-        generation_members = []
+    def _roulette_selection(self, n):
+        members_fitness = [m.get_fitness() for m in self.members]
+        fitness_sum = sum(members_fitness)
+        probs = [x / fitness_sum for x in members_fitness]
+        parents = random.choices(self.members, weights=probs, k=n)
 
-        n_parents = POPULATION * 2 - ELITISM
-        parents = self._top_k_random_selection(n=n_parents, k=TOP_K_RANDOM_SELECTION)
+        return parents
+
+    def _rank_selection(self, n):
+        members = self._sort_members()
+        members = reversed(members)
+        
+        size = len(members)
+        ranks_sum = int((size + 1) * (size / 2))
+        probs = [x / ranks_sum for x in range(1, size + 1)]
+        parents = random.choices(members, weights=probs, k=n)
+
+        return parents
+
+    def _tournament_selection(self, n, t_size):
+        parents = []
+
+        def tournament(participants):
+            winner = (participants[0], participants[0].get_fitness())
+
+            for p in participants[1:]:
+                p_fitness = p.get_fitness()
+                if p_fitness > winner[1]:
+                    winner = (p, p_fitness)
+
+            return winner[0]
+
+        while len(parents) < n:
+            participants = random.sample(self.members, k=t_size)
+            winner = tournament(participants)
+            parents.append(winner)
+
+        return parents
+
+    def _select_parents(self, n, s_type):
+        if s_type == 'top_k':
+            return self._top_k_random_selection(n, k=TOP_K_RANDOM_SELECTION)
+        elif s_type == 'roulette':
+            return self._roulette_selection(n)
+        elif s_type == 'rank':
+            return self._rank_selection(n)
+        elif s_type == 'tournament':
+            return self._tournament_selection(n, t_size=TOURNAMENT_SIZE)
+        else:
+            raise Exception('Invalid selection type')
+
+    def generate_next_generation(self, s_type):
+        next_gen_members = []
+
+        n_parents = POPULATION - ELITISM
+        parents = self._select_parents(n=n_parents, s_type=s_type)
 
         for i in range(0, n_parents, 2):
             parent1 = parents[i]
@@ -156,14 +235,13 @@ class Population:
             child1, child2 = Genome.crossover(parent1, parent2)
             child1.mutate(MUTATION_PROB, range(self.graph.chromatic_num))
             child2.mutate(MUTATION_PROB, range(self.graph.chromatic_num))
-            generation_members.append(child1)
-            generation_members.append(child2)
+            next_gen_members.append(child1)
+            next_gen_members.append(child2)
 
-        key = lambda x: x.get_fitness(self.graph)
-        sorted_members = sorted(self.members, key=key, reverse=True)
-        generation_members.extend(sorted_members[:ELITISM])
+        sorted_members = self._sort_members()
+        next_gen_members.extend(sorted_members[:ELITISM])
 
-        self.members = generation_members
+        self.members = next_gen_members
 
         return sorted_members[0]
 
@@ -190,11 +268,18 @@ if __name__ == '__main__':
     }
     pos1 = [(0, 0), (10, 0), (20, 0), (10, 10), (0, 20), (10, 20), (20, 20)]
     pos2 = [(10, 0), (7, 7), (0, 10), (-7, 7), (-10, 0), (-7, -7), (0, -10), (7, -7)]
-    graph = Graph(graph_dict2, 5, vertices_pos=pos2)
+    #graph = Graph(graph_dict2, 5, vertices_pos=pos2)
+    graph = Graph.random_graph(10, 5, 5)
     population = Population(POPULATION, graph)
-
-    for i in range(GENERATIONS):
-        best = population.generate_next_generation()
-        draw_graph_interactive(graph, best.chromosome, graph.vertices_pos)
-        print(i, best.get_fitness(graph), best.chromosome, best.chromatic_num)
+    
+    for s_type in ['top_k', 'roulette', 'rank', 'tournament']:
+        for i in range(GENERATIONS):
+            best = population.generate_next_generation(s_type)
+            best_fitness = round(best.get_fitness(graph), 2)
+            best_chromatic_num = best.chromatic_num
+            
+            plot_title = f"S_Type:{s_type} Gen:{i}/{GENERATIONS} "\
+                               f"Best Fitness:{best_fitness} Best Colors:{best_chromatic_num}"
+            draw_graph_interactive(graph, best.chromosome, graph.vertices_pos, plot_title)
+            print(i, best_fitness, best.chromosome, best_chromatic_num)
     turn_off_interactive()
