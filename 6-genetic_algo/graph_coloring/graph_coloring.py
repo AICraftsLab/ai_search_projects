@@ -149,6 +149,7 @@ class Genome:
     def __init__(self, chromosome):
         self.chromosome = chromosome
         self.chromatic_num = 0
+        self.conflicts = 0
 
     def get_fitness(self, graph):
         conflicts = 1
@@ -159,11 +160,13 @@ class Genome:
             if node_color in neighbors_colors:
                 conflicts += 1
 
-        unique_colors = []
+        unique_colors = []  # TODO: try using Counter
         for color in self.chromosome:
             if color not in unique_colors:
                 unique_colors.append(color)
+
         self.chromatic_num = len(unique_colors)
+        self.conflicts = conflicts - 1
         return 3 / conflicts + 1 / len(unique_colors)
 
     def mutate(self, prob, allele):
@@ -184,7 +187,7 @@ class Genome:
         return offspring1, offspring2
 
     def __repr__(self):
-        return str(self.chromosome)
+        return f'Conflicts:{self.conflicts} Colors:{self.chromatic_num} {self.chromosome}'
 
 
 class Population:
@@ -315,8 +318,9 @@ if __name__ == '__main__':
             best_fitness = round(best.get_fitness(graph), 2)
             best_chromatic_num = best.chromatic_num
             
-            plot_title = f"S_Type:{s_type} Gen:{i+1}/{GENERATIONS} "\
-                               f"Best Fitness:{best_fitness} Best Colors:{best_chromatic_num}"
+            plot_title = f"S_Type:{s_type} Gen:{i+1}/{GENERATIONS} " \
+                         f"Best Fitness:{best_fitness} Best Colors:{best_chromatic_num} " \
+                         f"Conflicts:{best.conflicts}"
             
             if i + 1 == GENERATIONS:
                 plot_file = os.path.join(project_name, f'{s_type}.png')
@@ -324,5 +328,5 @@ if __name__ == '__main__':
                 plot_file = None
                 
             draw_graph_interactive(graph, best.chromosome, plot_title, save_path=plot_file)
-            print(i, best_fitness, best.chromosome, best_chromatic_num)
+            print(i, 'Fitness', best_fitness, best)
     turn_off_interactive()
