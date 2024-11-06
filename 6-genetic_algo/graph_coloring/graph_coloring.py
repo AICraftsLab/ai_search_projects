@@ -1,5 +1,7 @@
 import random
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 # Problem global variables 
 GENERATIONS = 1000
@@ -12,11 +14,11 @@ TOURNAMENT_SIZE = POPULATION // 10
 COLORS = ['red', 'blue', 'green', 'yellow', 'orange', 'brown', 'black']
 
 
-def draw_graph(graph, vertices_pos=None):
-    plt.figure()
+def draw_graph(graph, save_path=None):
+    plt.figure(figsize=(6, 6))  # square figure
 
-    if not vertices_pos:
-        vertices_pos = [(random.randrange(100), random.randrange(100)) for _ in range(graph.vertices)]
+    #vertices_pos = [(random.randrange(100), random.randrange(100)) for _ in range(graph.vertices)]
+    vertices_pos = graph.vertices_pos
     x_coords, y_coords = zip(*vertices_pos)
     plt.scatter(x_coords, y_coords, s=100, zorder=1)
 
@@ -32,19 +34,25 @@ def draw_graph(graph, vertices_pos=None):
         x_coords, y_coords = zip(*positions)
         plt.plot(x_coords, y_coords, color='red', linewidth=1, zorder=0)
         plt.annotate(str(vertex), (vertex_pos[0], vertex_pos[1]), textcoords="offset points", xytext=(0, 10), ha='center')
-
+    
+    plt.title(f'Graph Coloring. Vertices:{graph.vertices} Colors:{graph.chromatic_num}')
+    
+    if save_path:
+        plt.savefig(save_path)
+        
     plt.show()
 
 
-def draw_graph_interactive(graph, chromosome, vertices_pos, title):
+def draw_graph_interactive(graph, chromosome, title):
     if not plt.isinteractive():
         plt.ion()
 
-    plt.figure(1)
+    plt.figure(1, figsize=(6, 6))  # square fig
     plt.clf()
-
+    
+    vertices_pos = graph.vertices_pos
     x_coords, y_coords = zip(*vertices_pos)
-    colors = [COLORS[i] for i in chromosome]
+    colors = [COLORS[i] for i in chromosome]  # TODO: use try-except if indexerror to create an (RGB) tuple
     plt.scatter(x_coords, y_coords, c=colors, s=100, zorder=1)
 
     for vertex, neighbors in graph.graph_dict.items():
@@ -71,16 +79,44 @@ def turn_off_interactive():
 
 class Graph:
     """Class to represent graph"""
-    def __init__(self, graph_dict, chromatic_number, vertices_pos=None):
+    def __init__(self, graph_dict, chromatic_number):
         self.chromatic_num = chromatic_number
         self.graph_dict = graph_dict
         self.vertices = len(self.graph_dict)
-
-        if vertices_pos:
-            self.vertices_pos = vertices_pos
-        else:
-            self.vertices_pos = [(random.randrange(100), random.randrange(100)) for _ in range(self.vertices)]
-
+        self.vertices_pos = self._generate_vertices_pos()
+        
+    def _generate_vertices_pos(self):
+        def divide_circle(radius, n):
+            theta = 2 * np.pi / n  # Angle between points
+            points = []
+            r = random.random() * random.choice([1,-1])
+            for i in range(n):
+                x = radius * np.cos(i * theta + r)
+                y = radius * np.sin(i * theta + r)
+                x = round(x, 2)
+                y = round(y, 2)
+                points.append((x, y))
+                
+            return points
+            
+        radius = 1
+        radius_incr = 3
+        vertices = 3
+        vertices_incr = 3
+        
+        pos = []
+        while len(pos) < self.vertices:
+            points = divide_circle(radius, vertices)
+            pos.extend(points)
+            if self.vertices - len(pos) > vertices_incr:
+                vertices += vertices_incr
+            else:
+                vertices = self.vertices - len(pos)
+            #print(vertices, self.vertices, self.vertices - vertices)
+            radius += radius_incr
+        print(len(pos))
+        return pos
+    
     @classmethod
     def random_graph(cls, vertices, chromatic_num, max_conn, min_conn=1):
         assert min_conn > 0 and min_conn < max_conn, "Invalid Min connections must be 0 < min_conn < max_conn"
@@ -100,7 +136,7 @@ class Graph:
                     if len(connections) < max_conn and len(neighbor_conn) < max_conn:
                         connections.add(neighbor)
                         neighbor_conn.add(vertex)
-        print(graph_dict)
+        #print(graph_dict)
         
         return Graph(graph_dict, chromatic_num)
 
@@ -247,6 +283,7 @@ class Population:
 
 
 if __name__ == '__main__':
+    random.seed(None)
     graph_dict1 = {
         0: [3],
         1: [4, 6, 3],
@@ -256,22 +293,10 @@ if __name__ == '__main__':
         5: [3, 4, 6, 3],
         6: [1, 5, 3]
     }
-    graph_dict2 = {
-        0: [3],
-        1: [4, 6, 3],
-        2: [3],
-        3: [0, 2, 5],
-        4: [1, 5, 3],
-        5: [3, 4, 6, 3],
-        6: [1, 5, 3],
-        7: [0, 2, 4]
-    }
-    pos1 = [(0, 0), (10, 0), (20, 0), (10, 10), (0, 20), (10, 20), (20, 20)]
-    pos2 = [(10, 0), (7, 7), (0, 10), (-7, 7), (-10, 0), (-7, -7), (0, -10), (7, -7)]
-    #graph = Graph(graph_dict2, 5, vertices_pos=pos2)
-    graph = Graph.random_graph(10, 5, 5)
-    population = Population(POPULATION, graph)
     
+    graph = Graph.random_graph(20, 5, 10)
+    population = Population(POPULATION, graph)
+    draw_graph(graph)
     for s_type in ['top_k', 'roulette', 'rank', 'tournament']:
         for i in range(GENERATIONS):
             best = population.generate_next_generation(s_type)
@@ -280,6 +305,6 @@ if __name__ == '__main__':
             
             plot_title = f"S_Type:{s_type} Gen:{i}/{GENERATIONS} "\
                                f"Best Fitness:{best_fitness} Best Colors:{best_chromatic_num}"
-            draw_graph_interactive(graph, best.chromosome, graph.vertices_pos, plot_title)
+            #draw_graph_interactive(graph, best.chromosome, graph.vertices_pos, plot_title)
             print(i, best_fitness, best.chromosome, best_chromatic_num)
     turn_off_interactive()
