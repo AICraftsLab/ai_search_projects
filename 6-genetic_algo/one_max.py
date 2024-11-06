@@ -64,14 +64,9 @@ class Population:
     
     def _select_parents(self, n):
         """Selection process method"""
-
-        # creates a (genome, genome_fitness) list
-        genomes = [(g, g.get_fitness()) for g in self.genomes]
-        key = lambda x: x[1]  # func to sort genomes by fitness
-        genomes.sort(key=key, reverse=True)  # sorts in descending order
+        key = lambda x: x.get_fitness()  # func to sort genomes by fitness
+        genomes = sorted(self.genomes, key=key, reverse=True)  # sorts in descending order
         genomes = genomes[:POPULATION // 4]  # selects top quarter
-        # creates a list of genomes from (genome, genome_fitness) list
-        genomes = [g[0] for g in genomes]
 
         # randomly selects n parents from the top parents
         parents = random.choices(genomes, k=n)
@@ -80,11 +75,9 @@ class Population:
 
     def _get_elites(self, elitism):
         """Selects the elite genomes"""
-        genomes = [(g, g.get_fitness()) for g in self.genomes]
-        key = lambda x: x[1]
-        genomes.sort(key=key, reverse=True)
+        key = lambda x: x.get_fitness()  # func to sort genomes by fitness
+        genomes = sorted(self.genomes, key=key, reverse=True)  # sorts in descending order
         genomes = genomes[:elitism]
-        genomes = [g[0] for g in genomes]
 
         return genomes
 
