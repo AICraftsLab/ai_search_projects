@@ -42,29 +42,6 @@ HIKING_ITEMS = (
 )
 
 
-def plot_best_history(best_history, save_path=None):
-    """Func to plot history"""
-    plt.figure()
-
-    x_coord, values, weights = zip(*best_history)
-
-    y_coord = values
-    plt.plot(x_coord, y_coord, label='Values')
-
-    y_coord = weights
-    plt.plot(x_coord, y_coord, label='Capacity')
-
-    plt.title('Knapsack best history')
-    plt.legend()
-    plt.xlabel('Generation')
-    plt.ylabel('Value')
-
-    if save_path:
-        plt.savefig(save_path)
-
-    plt.show()
-
-
 def print_items(items):
     """Func to print bag items info"""
     for item in items:
@@ -83,7 +60,8 @@ class Item:
         return f'Item {self.name} Value:{self.value} Weight:{self.weight}'
 
     @classmethod
-    def from_random_items(cls, n, min_value=10, max_value=100, min_weight=10, max_weight=BAG_CAPACITY // 5):
+    def from_random_items(cls, n, min_value=10, max_value=100,
+                          min_weight=10, max_weight=BAG_CAPACITY // 5):
         """Creates a random list of items"""
         items = []
 
@@ -111,7 +89,7 @@ class Item:
 
 
 class Genome:
-    ITEMS = []
+    ITEMS = None
 
     def __init__(self, chromosome):
         self.chromosome = chromosome
@@ -147,7 +125,7 @@ class Genome:
     def mutate(self, prob):
         for i in range(len(self.chromosome)):
             if random.random() < prob:
-                self.chromosome[i] = int(not self.chromosome[i])
+                self.chromosome[i] = int(not self.chromosome[i])  # flips value
 
     def print_items(self):
         """Prints items selected by this genome"""
@@ -238,9 +216,6 @@ class Population:
 
 
 if __name__ == '__main__':
-    seed = None
-    random.seed(seed)
-
     # items = Item.from_random_items(TOTAL_ITEMS)
     items = Item.from_items_list(HIKING_ITEMS)
     Genome.ITEMS = items
@@ -250,23 +225,15 @@ if __name__ == '__main__':
     overall_best = None
     overall_best_fitness = 0
     overall_best_weight = 0
-    best_history = []
 
     for i in range(GENERATIONS):
         best = population.generate_next_generation()
         best_fitness = best.get_fitness()
 
-        if overall_best is None:
+        if overall_best is None or best_fitness > overall_best_fitness:
             overall_best = best
             overall_best_fitness = best_fitness
             overall_best_weight = best.get_weight()
-            best_history.append((i, best_fitness, best.get_weight()))
-        else:
-            if best_fitness > overall_best_fitness:
-                overall_best = best
-                overall_best_fitness = best_fitness
-                overall_best_weight = best.get_weight()
-                best_history.append((i, best_fitness, best.get_weight()))
 
         print('Generation:', i, 'Best Fitness:', overall_best_fitness, 'Weight:', overall_best_weight)
 
@@ -277,6 +244,3 @@ if __name__ == '__main__':
     print('Overall Best Fitness:', overall_best_fitness, overall_best.chromosome)
     overall_best.print_items()
     print('Total weight', overall_best.get_weight())
-
-    best_history.append((i, best_fitness, best.get_weight()))
-    plot_best_history(best_history)
