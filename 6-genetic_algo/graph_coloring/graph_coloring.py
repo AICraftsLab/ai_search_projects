@@ -1,10 +1,11 @@
 import random
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 
 # Problem global variables 
-GENERATIONS = 1000
+GENERATIONS = 10
 POPULATION = 100
 MUTATION_PROB = 0.01
 ELITISM = 10
@@ -14,8 +15,8 @@ TOURNAMENT_SIZE = POPULATION // 10
 COLORS = ['red', 'blue', 'green', 'yellow', 'orange', 'brown', 'black']
 
 
-def draw_graph(graph, save_path=None):
-    plt.figure(figsize=(6, 6))  # square figure
+def draw_graph(graph, show=False, save_path=None):
+    plt.figure(figsize=(8, 8))  # square figure
 
     #vertices_pos = [(random.randrange(100), random.randrange(100)) for _ in range(graph.vertices)]
     vertices_pos = graph.vertices_pos
@@ -39,15 +40,16 @@ def draw_graph(graph, save_path=None):
     
     if save_path:
         plt.savefig(save_path)
-        
-    plt.show()
+    
+    if show:
+        plt.show()
 
 
-def draw_graph_interactive(graph, chromosome, title):
+def draw_graph_interactive(graph, chromosome, title, save_path=None):
     if not plt.isinteractive():
         plt.ion()
 
-    plt.figure(1, figsize=(6, 6))  # square fig
+    plt.figure(1, figsize=(8, 8))  # square fig
     plt.clf()
     
     vertices_pos = graph.vertices_pos
@@ -70,6 +72,9 @@ def draw_graph_interactive(graph, chromosome, title):
 
     plt.title(title)
     plt.pause(0.01)
+    
+    if save_path:
+        plt.savefig(save_path)
 
 
 def turn_off_interactive():
@@ -209,7 +214,7 @@ class Population:
         return parents
 
     def _roulette_selection(self, n):
-        members_fitness = [m.get_fitness() for m in self.members]
+        members_fitness = [m.get_fitness(self.graph) for m in self.members]
         fitness_sum = sum(members_fitness)
         probs = [x / fitness_sum for x in members_fitness]
         parents = random.choices(self.members, weights=probs, k=n)
@@ -219,6 +224,7 @@ class Population:
     def _rank_selection(self, n):
         members = self._sort_members()
         members = reversed(members)
+        members = list(members)  # TODO: check the reverse operation
         
         size = len(members)
         ranks_sum = int((size + 1) * (size / 2))
@@ -231,10 +237,10 @@ class Population:
         parents = []
 
         def tournament(participants):
-            winner = (participants[0], participants[0].get_fitness())
+            winner = (participants[0], participants[0].get_fitness(self.graph))
 
             for p in participants[1:]:
-                p_fitness = p.get_fitness()
+                p_fitness = p.get_fitness(self.graph)
                 if p_fitness > winner[1]:
                     winner = (p, p_fitness)
 
@@ -284,6 +290,9 @@ class Population:
 
 if __name__ == '__main__':
     random.seed(None)
+    project_name = 'graph_coloring_1'
+    os.makedirs(project_name, exist_ok=True)
+    
     graph_dict1 = {
         0: [3],
         1: [4, 6, 3],
@@ -294,17 +303,26 @@ if __name__ == '__main__':
         6: [1, 5, 3]
     }
     
-    graph = Graph.random_graph(20, 5, 10)
-    population = Population(POPULATION, graph)
-    draw_graph(graph)
+    graph = Graph.random_graph(20, 2, 10)
+    graph_file = os.path.join(project_name, 'graph.png')
+    draw_graph(graph, save_path=graph_file)
+    
     for s_type in ['top_k', 'roulette', 'rank', 'tournament']:
+        print('Selection:', s_type)
+        population = Population(POPULATION, graph)
         for i in range(GENERATIONS):
             best = population.generate_next_generation(s_type)
             best_fitness = round(best.get_fitness(graph), 2)
             best_chromatic_num = best.chromatic_num
             
-            plot_title = f"S_Type:{s_type} Gen:{i}/{GENERATIONS} "\
+            plot_title = f"S_Type:{s_type} Gen:{i+1}/{GENERATIONS} "\
                                f"Best Fitness:{best_fitness} Best Colors:{best_chromatic_num}"
-            #draw_graph_interactive(graph, best.chromosome, graph.vertices_pos, plot_title)
+            
+            if i + 1 == GENERATIONS:
+                plot_file = os.path.join(project_name, f'{s_type}.png')
+            else:
+                plot_file = None
+                
+            draw_graph_interactive(graph, best.chromosome, plot_title, save_path=plot_file)
             print(i, best_fitness, best.chromosome, best_chromatic_num)
     turn_off_interactive()
