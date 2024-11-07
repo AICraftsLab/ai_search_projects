@@ -64,6 +64,7 @@ def plot_compare_best_history(experiment_dict, generations, save_path=None):
     """Func to compare best genomes gotten overtime"""
     plt.figure(figsize=(10, 7))
 
+    # Plotting each run info
     for name, data in experiment_dict.items():
         y_coords, x_coords = zip(*data['best_history'])
         
@@ -95,16 +96,6 @@ def stop_interactive_plot():
 def distance(city1, city2):
     """Calculate the distance between two cities"""
     return math.dist(city1.position, city2.position)
-
-
-def save_experiment_parameters(path, name, seed, more_info=''):
-    """Write experiment parameters in a file"""
-    data = f'{name=}\n{seed=}\n{GENERATIONS=}\n{CITIES=}\n' \
-           f'{MAP_SIZE=}\n{POPULATION=}\n{ELITISM=}\n' \
-           f'{TOP_K=}\n\n{more_info}\n'
-
-    with open(path, 'w') as f:
-        f.write(data)
 
 
 def print_experiment_summary(exp_dict, save_path):
@@ -205,44 +196,10 @@ class Genome:
         """Create a replica of this genome"""
         return Genome(self.chromosome.copy())
 
-    def mutate(self, type):
-        if type == 'swap':
-            self._swap_mutation()
-        elif type == 'inverse':
-            self._inversion_mutation()
-        elif type == '2-opt':
-            self._two_opt_mutation()
-        elif type == 'random':
-            rand = random.randrange(4)
-            if rand == 0:
-                self._swap_mutation()
-            elif rand == 1:
-                self._inversion_mutation()
-            elif rand == 2:
-                self._two_opt_mutation()
-        else:
-            raise Exception('Invalid mutation type')
-
-    def _swap_mutation(self):
+    def mutate(self):
         points = random.sample(range(len(self.chromosome)), k=2)
         p1, p2 = points 
         self.chromosome[p1], self.chromosome[p2] = self.chromosome[p2], self.chromosome[p1]
-
-    def _inversion_mutation(self):
-        points = random.sample(range(len(self.chromosome)), k=2)
-        points.sort()
-        p1, p2 = points
-        genes = self.chromosome[p1:p2]
-        genes.reverse()
-        new_chromosome = self.chromosome[:p1] + genes + self.chromosome[p2:]
-        self.chromosome = new_chromosome
-
-    def _two_opt_mutation(self):
-        points = random.sample(range(len(self.chromosome)), k=2)
-        p1, p2 = points
-        edge1 = p1, (p1 + 1) % len(self.chromosome)
-        edge2 = p2, (p2 + 1) % len(self.chromosome)
-        self.chromosome[edge1[1]], self.chromosome[edge2[0]] = self.chromosome[edge2[0]], self.chromosome[edge1[1]]
 
     def get_solution(self):
         """Return a list of city indices in chromosome"""
@@ -374,7 +331,7 @@ class Population:
             genome = Genome(random.sample(self.map.cities, self.map.cities_n))
             self.members.append(genome)
 
-    def generate_next_generation(self, c_type='ox', m_type='swap'):
+    def generate_next_generation(self, c_type='ox'):
         next_gen_members = []
         parents_n = self.size - ELITISM
         parents = self._top_k_random_selection(parents_n, TOP_K)
@@ -383,8 +340,8 @@ class Population:
             parent1 = parents[i]
             parent2 = parents[i + 1]
             child1, child2 = Genome.crossover(parent1, parent2, c_type=c_type)
-            child1.mutate(type=m_type)
-            child2.mutate(type=m_type)
+            child1.mutate()
+            child2.mutate()
             next_gen_members.append(child1)
             next_gen_members.append(child2)
 
@@ -411,17 +368,13 @@ class Population:
 
 if __name__ == '__main__':
     # RNG seed
-    seed = 2.5
+    seed = 2.8
     random.seed(seed)
     
     # Experiment name and path
     experiment_name = 'tmp'
     os.makedirs(experiment_name, exist_ok=True)
 
-    # Save experiment info
-    params_file = os.path.join(experiment_name, 'parameters.txt')
-    save_experiment_parameters(params_file, experiment_name, seed)
-    
     # Maps
     map = Map(CITIES)
     # map = Map.from_coordinates_tuples(nigeria)
@@ -434,7 +387,7 @@ if __name__ == '__main__':
     experiment_dict = {}
 
     for c_type in ['ox', 'pmx', 'cx']:
-        for m_type in ['swap', 'inverse', '2-opt', 'random']:
+        if True:
             # Reseed RNG each run
             random.seed(seed)
             
@@ -442,13 +395,13 @@ if __name__ == '__main__':
             population = Population(POPULATION, map)
             
             # Run info
-            title = c_type + ' ' + m_type
+            title = c_type
             run_best_fitness = 0
             run_best_fitness_gen = 0
             run_best_history = []
 
             for i in range(GENERATIONS):
-                best = population.generate_next_generation(c_type=c_type, m_type=m_type)
+                best = population.generate_next_generation(c_type=c_type)
                 best_fitness = best.get_fitness()
                 
                 # Check for run new best
