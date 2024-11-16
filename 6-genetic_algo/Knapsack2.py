@@ -1,5 +1,4 @@
 import random
-import matplotlib.pyplot as plt
 
 # Problem global variables
 GENERATIONS = 500
@@ -18,7 +17,6 @@ HIKING_ITEMS = (
     ("Tablet", 70, 100),
     ("Charger", 15, 10),
     ("Speaker", 45, 80),
-    ("Notebook", 20, 10),
     ("Shoes", 50, 100),
     ("Jacket", 75, 180),
     ("Sunglasses", 25, 30),
@@ -38,7 +36,10 @@ HIKING_ITEMS = (
     ("Hiking Pole", 40, 100),
     ("Raincoat", 55, 120),
     ("Snacks", 20, 30),
-    ("Notebook", 20, 20),
+    ("Fire Starter", 40, 20),
+    ("Lantern", 55, 40),
+    ("Insect Repellent", 20, 15),
+    ("Rope", 40, 60),
 )
 
 
@@ -230,12 +231,14 @@ if __name__ == '__main__':
         best = population.generate_next_generation()
         best_fitness = best.get_fitness()
 
+        # Check for new best
         if overall_best is None or best_fitness > overall_best_fitness:
             overall_best = best
             overall_best_fitness = best_fitness
             overall_best_weight = best.get_weight()
 
         print('Generation:', i, 'Best Fitness:', overall_best_fitness, 'Weight:', overall_best_weight)
+    print()
 
     print('All items')
     print_items(items)
