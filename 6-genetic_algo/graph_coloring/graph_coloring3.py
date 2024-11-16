@@ -1,8 +1,9 @@
 import random
 import matplotlib.pyplot as plt
-import numpy as np
 import os
+import numpy as np
 
+# Script version: generate random graph
 
 # Problem global variables
 GENERATIONS = 1000
@@ -41,7 +42,8 @@ def draw_graph(graph, show=False, save_path=None):
         plt.annotate(str(vertex), (vertex_pos[0], vertex_pos[1]), fontsize=14,
                      textcoords="offset points", xytext=(0, 15), ha='center')
 
-    plt.title(f'Graph Coloring. Vertices:{graph.vertices} Colors:{graph.available_colors}', fontsize=14)
+    plt.title(f'Graph Coloring. Vertices:{graph.vertices} '
+              f'Colors:{graph.available_colors}', fontsize=14)
     plt.axis('off')
 
     # If save_path is provided
@@ -104,6 +106,8 @@ class Graph:
         self.available_colors = available_colors
         self.graph_dict = graph_dict
         self.vertices = len(self.graph_dict)
+
+        # Vertices pos
         self.vertices_pos = self._generate_vertices_pos()
 
     def _generate_vertices_pos(self):
@@ -113,8 +117,8 @@ class Graph:
             theta = 2 * np.pi / n  # Angle between points
             points = []
 
-            # Randomly rotate the points a little
-            r = random.random() * random.choice([1,-1])
+            # Randomly rotate the points around the origin
+            r = random.random() * random.choice([1, -1])
             for i in range(n):
                 x = radius * np.cos(i * theta + r)
                 y = radius * np.sin(i * theta + r)
@@ -150,7 +154,8 @@ class Graph:
     def random_graph(cls, vertices, colors, max_conn, min_conn=1):
         """Generate a random graph"""
         # Required checks
-        assert 0 < min_conn < max_conn, "Invalid Min connections must be 0 < min_conn < max_conn"
+        assert 0 < min_conn < max_conn, "Invalid Min connections." \
+                                        "Must be 0 < min_conn < max_conn"
         assert max_conn <= vertices, "Max connections must be <= vertices"
 
         # Create graph adjacency list
@@ -158,9 +163,11 @@ class Graph:
 
         # Establish relationships
         for vertex, connections in graph_dict.items():
+            # Number/amount of neighbors to establish connections with
             neighbors_n = random.randrange(min_conn, max_conn)
-            while len(connections) < neighbors_n:  # TODO: bug without this line,  vertex with no connections
-                sampling_pop = list(range(vertices))
+
+            while len(connections) < neighbors_n:  # bug without this line,  vertex with no connections
+                sampling_pop = list(range(vertices))  # Population to sample from
 
                 # Remove the current node to avoid connection to itself
                 sampling_pop.remove(vertex)
@@ -339,23 +346,20 @@ class Population:
 
 if __name__ == '__main__':
     # Seeding for reproducibility
-    seed = 0.4704386501839264 #random.random()
-    print('Seed', seed)
+    seed = random.randrange(100)
+    print('Seed:', seed)
     random.seed(seed)
 
     # Project path
     project_name = 'graph_coloring_1'
     os.makedirs(project_name, exist_ok=True)
 
-    # Random Graph
-    graph = Graph.random_graph(30, 4, 5)
+    # Generate a random graph
+    graph = Graph.random_graph(15, 5, 4)
     graph_file = os.path.join(project_name, 'graph.png')
-    draw_graph(graph, save_path=graph_file)  # Plot graph
+    draw_graph(graph, save_path=graph_file)
 
     for s_type in ['top_k', 'roulette', 'rank', 'tournament']:
-        # Reseeding at every run
-        random.seed(seed)
-
         print('Selection:', s_type)
         population = Population(POPULATION, graph)
         best = None
@@ -379,7 +383,8 @@ if __name__ == '__main__':
             # Update plot every 25 generations and in the last
             if i % 25 == 0 or i + 1 == GENERATIONS:
                 plot_title = f"S_Type:{s_type} Gen:{i}/{GENERATIONS} " \
-                             f"Best Fitness:{best_fitness:.2f} Best Colors:{best.colors} " \
+                             f"Best Fitness:{best_fitness:.2f} " \
+                             f"Best Colors:{best.colors} " \
                              f"Conflicts:{best.conflicts}"
                 draw_graph_interactive(graph, best.chromosome, plot_title, save_path=plot_file)
             print(i, 'Fitness', round(best_fitness, 2), best)
