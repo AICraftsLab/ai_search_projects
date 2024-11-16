@@ -1,9 +1,9 @@
 import random
 from pprint import pprint
-
+import numpy as np
 import matplotlib.pyplot as plt
 
-GENERATIONS = 1000
+GENERATIONS = 100
 POPULATION = 100
 MUTATION_PROB = 0.01
 ELITISM = 10
@@ -68,20 +68,35 @@ def draw_graph_interactive(graph, chromosome, generation, vertices_pos):
 
 def turn_off_interactive():
     plt.ioff()
-    plt.show()
+    #plt.show()
 
 
 def create_timetable(timetable_dict, solution):
     timetable = {period: [] for period in timetable_dict['periods']}
 
     for course_idx, period_idx in enumerate(solution):
-        period = timetable_dict['periods'][period_idx]
+        period = timetable_dict['days_periods'][period_idx]
         course = timetable_dict['courses'][course_idx]
 
         timetable[period].append(course)
 
     return timetable
 
+def plot_timetable(timetable_dict, solution):
+    days_n = len(timetable_dict['days'])
+    periods_n = len(timetable_dict['periods'])
+    days_periods_2d_indices = {day_period: divmod(i, periods_n) for i, day_period in enumerate(timetable_dict['days_periods'])}
+    timetable_data = np.full((days_n, periods_n, 1), '')
+    
+    for course_idx, period_idx in enumerate(solution):
+        period = timetable_dict['days_periods'][period_idx]
+        course = timetable_dict['courses'][course_idx]
+        p_row, p_col = days_periods_2d_indices[period]
+        print(course, p_row, p_col, period)
+        data = str(course[0]) + '\n' + str(course[1:])
+        timetable_data[p_row][p_col].append(data)
+
+    return timetable_data
 
 class Graph:
     def __init__(self, graph_dict, chromatic_number, vertices_pos=None):
@@ -204,7 +219,9 @@ if __name__ == '__main__':
     }
 
     timetable_dict = {
-        'periods': ['Mon 8-10am', 'Mon 11-1pm', 'Mon 1:45-3:45pm', 'Mon 4-6pm',
+        'days': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        'periods': ['8-10', '11-1', '1:45-3:45', '4-6'],
+        'days_periods': ['Mon 8-10am', 'Mon 11-1pm', 'Mon 1:45-3:45pm', 'Mon 4-6pm',
                     'Tue 8-10am', 'Tue 11-1pm', 'Tue 1:45-3:45pm', 'Tue 4-6pm',
                     'Wed 8-10am', 'Wed 11-1pm', 'Wed 1:45-3:45pm', 'Wed 4-6pm',
                     'Thu 8-10am', 'Thu 11-1pm', 'Thu 1:45-3:45pm', 'Thu 4-6pm',
@@ -238,8 +255,8 @@ if __name__ == '__main__':
         
         if i % 25 == 0 or i == GENERATIONS - 1:
             draw_graph_interactive(graph, best.chromosome, i, graph.vertices_pos)
-            print(i, round(best.get_fitness(graph), 2), best.chromosome, best.num)
+            #print(i, round(best.get_fitness(graph), 2), best.chromosome, best.num)
 
-    timetable = create_timetable(timetable_dict, best.chromosome)
+    timetable = plot_timetable(timetable_dict, best.chromosome)
     pprint(timetable)
     turn_off_interactive()
