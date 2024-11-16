@@ -8,8 +8,8 @@ from custom_maps import nigeria, africa, world
 
 
 # Problem global variables 
-GENERATIONS = 1000
-CITIES = 30
+GENERATIONS = 3000
+CITIES = 50
 MAP_SIZE = (300, 300)
 POPULATION = 100
 ELITISM = 10
@@ -411,11 +411,11 @@ class Population:
 
 if __name__ == '__main__':
     # RNG seed
-    seed = 2.5
+    seed = random.random()
     random.seed(seed)
     
     # Experiment name and path
-    experiment_name = 'tmp'
+    experiment_name = '50_cities'
     os.makedirs(experiment_name, exist_ok=True)
 
     # Save experiment info
