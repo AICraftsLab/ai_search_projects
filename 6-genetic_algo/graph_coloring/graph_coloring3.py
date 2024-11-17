@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 
-# Script version: generate random graph
+# Script version: generate random graph, final
 
 # Problem global variables
 GENERATIONS = 1000
@@ -208,6 +208,7 @@ class Genome:
 
         self.colors = len(unique_colors)
         self.conflicts = conflicts
+
         return -conflicts + 1 / len(unique_colors)
 
     def mutate(self, prob, allele):
@@ -346,7 +347,7 @@ class Population:
 
 if __name__ == '__main__':
     # Seeding for reproducibility
-    seed = random.randrange(100)
+    seed = random.randrange(1000)
     print('Seed:', seed)
     random.seed(seed)
 
