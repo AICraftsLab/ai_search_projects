@@ -22,7 +22,7 @@ class Genome:
                 self.chromosome[i] = int(not self.chromosome[i])
 
     @classmethod
-    def _single_point_crossover(cls, genome1_x, genome2_x):
+    def __single_point_crossover(cls, genome1_x, genome2_x):
         crossover_point = random.randrange(GENES)
         child1_x = genome1_x[:crossover_point] + genome2_x[crossover_point:]
         child2_x = genome2_x[:crossover_point] + genome1_x[crossover_point:]
@@ -30,7 +30,7 @@ class Genome:
         return Genome(child1_x), Genome(child2_x)
 
     @classmethod
-    def _double_point_crossover(cls, genome1_x, genome2_x):
+    def __double_point_crossover(cls, genome1_x, genome2_x):
         crossover_points = random.sample(range(GENES), k=2)
         point1, point2 = sorted(crossover_points)
 
@@ -42,9 +42,9 @@ class Genome:
     @classmethod
     def crossover(cls, genome1_x, genome2_x, c_type='single'):
         if c_type == 'single':
-            return cls._single_point_crossover(genome1_x, genome2_x)
+            return cls.__single_point_crossover(genome1_x, genome2_x)
         elif c_type == 'double':
-            return cls._double_point_crossover(genome1_x, genome2_x)
+            return cls.__double_point_crossover(genome1_x, genome2_x)
 
 
 class Population:
@@ -52,9 +52,9 @@ class Population:
     def __init__(self, size):
         self.size = size
         self.genomes = []
-        self._initialize()
+        self.__initialize()
         
-    def _initialize(self):
+    def __initialize(self):
         """Creates the population's initial members/genomes"""
         for _ in range(self.size):
             # Creates a random chromosome of length GENES
@@ -62,7 +62,7 @@ class Population:
             genome = Genome(chromosome)
             self.genomes.append(genome)
     
-    def _select_parents(self, n):
+    def __select_parents(self, n):
         """Selection process method"""
         key = lambda x: x.get_fitness()  # func to sort genomes by fitness
         genomes = sorted(self.genomes, key=key, reverse=True)  # sorts in descending order
@@ -73,7 +73,7 @@ class Population:
         
         return parents
 
-    def _get_elites(self, elitism):
+    def __get_elites(self, elitism):
         """Selects the elite genomes"""
         key = lambda x: x.get_fitness()  # func to sort genomes by fitness
         genomes = sorted(self.genomes, key=key, reverse=True)  # sorts in descending order
@@ -87,7 +87,7 @@ class Population:
         next_gen_genomes = []
 
         parents_n = POPULATION - ELITISM
-        parents = self._select_parents(parents_n)  # selection
+        parents = self.__select_parents(parents_n)  # selection
 
         for i in range(0, parents_n, 2):
             parent1 = parents[i]
@@ -100,7 +100,7 @@ class Population:
             next_gen_genomes.append(child1)
             next_gen_genomes.append(child2)
 
-        elites = self._get_elites(ELITISM)
+        elites = self.__get_elites(ELITISM)
         next_gen_genomes.extend(elites)  # adding elites
         self.genomes = next_gen_genomes
 

@@ -136,7 +136,7 @@ class Genome:
                 print(item)
 
     @classmethod
-    def _singlepoint_crossover(cls, genome1_x, genome2_x):
+    def __singlepoint_crossover(cls, genome1_x, genome2_x):
         crossover_point = random.randrange(TOTAL_ITEMS)
         child1_x = genome1_x[:crossover_point] + genome2_x[crossover_point:]
         child2_x = genome2_x[:crossover_point] + genome1_x[crossover_point:]
@@ -144,7 +144,7 @@ class Genome:
         return Genome(child1_x), Genome(child2_x)
 
     @classmethod
-    def _doublepoint_crossover(cls, genome1_x, genome2_x):
+    def __doublepoint_crossover(cls, genome1_x, genome2_x):
         points = random.sample(range(TOTAL_ITEMS), k=2)
         points.sort()
         point1, point2 = points
@@ -156,9 +156,9 @@ class Genome:
     @classmethod
     def crossover(cls, genome1_x, genome2_x, c_type='single'):
         if c_type == 'single':
-            return cls._singlepoint_crossover(genome1_x, genome2_x)
+            return cls.__singlepoint_crossover(genome1_x, genome2_x)
         elif c_type == 'double':
-            return cls._doublepoint_crossover(genome1_x, genome2_x)
+            return cls.__doublepoint_crossover(genome1_x, genome2_x)
 
 
 class Population:
@@ -167,9 +167,9 @@ class Population:
     def __init__(self, size):
         self.size = size
         self.genomes = []
-        self._initialize()
+        self.__initialize()
 
-    def _initialize(self):
+    def __initialize(self):
         """Initialize population with random genomes"""
         for _ in range(self.size):
             chromosome = [random.randrange(2) for _ in range(TOTAL_ITEMS)]
@@ -181,7 +181,7 @@ class Population:
         next_gen_genomes = []
 
         parents_n = POPULATION - ELITISM
-        parents = self._select_parents(parents_n)  # selection
+        parents = self.__select_parents(parents_n)  # selection
 
         for i in range(0, parents_n, 2):
             parent1 = parents[i]
@@ -193,20 +193,20 @@ class Population:
             next_gen_genomes.append(child1)
             next_gen_genomes.append(child2)
 
-        elites = self._get_elites(ELITISM)  # elitism
+        elites = self.__get_elites(ELITISM)  # elitism
         next_gen_genomes.extend(elites)
         self.genomes = next_gen_genomes
 
         return elites[0]  # return best genome, top elite
 
-    def _get_elites(self, elitism):
+    def __get_elites(self, elitism):
         key = lambda x: x.get_fitness()
         genomes = sorted(self.genomes, key=key, reverse=True)
         genomes = genomes[:elitism]
 
         return genomes
 
-    def _select_parents(self, n):
+    def __select_parents(self, n):
         key = lambda x: x.get_fitness()
         genomes = sorted(self.genomes, key=key, reverse=True)
         genomes = genomes[:POPULATION // 4]
