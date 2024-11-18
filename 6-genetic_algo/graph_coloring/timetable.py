@@ -1,4 +1,4 @@
-from graph_coloring3 import *
+from graph_coloring import *
 
 # Problem global variables
 GENERATIONS = 1000
@@ -9,29 +9,26 @@ def plot_timetable(timetable_dict, solution, save_path=None):
     """Plot timetable"""
     days_n = len(timetable_dict['days'])
     periods_n = len(timetable_dict['periods'])
+    day_period_n = len(timetable_dict['day_period'])
 
-    # Create day_period: (row, col) for each day-period combination
-    day_period_2d_indices = {day_period: divmod(i, periods_n) for i, day_period in
-                             enumerate(timetable_dict['day_period'])}
-
-    timetable_data = np.empty((days_n, periods_n), dtype=object)
+    # Timetable periods' data
+    timetable_data = np.empty((day_period_n,), dtype=object)
 
     # Convert solution/chromosome to timetable
     for course_idx, period_idx in enumerate(solution):
-        period = timetable_dict['day_period'][period_idx]
         course = timetable_dict['courses'][course_idx]
-        p_row, p_col = day_period_2d_indices[period]
-        data = str(course[0]) + '\n' + str(list(course[1:])) + '\n'
+        data = str(course[0]) + ':' + str(list(course[1:])) + '\n'
 
-        if timetable_data[p_row, p_col]:
-            timetable_data[p_row, p_col] += data
+        if timetable_data[period_idx]:
+            timetable_data[period_idx] += data
         else:
-            timetable_data[p_row, p_col] = data
+            timetable_data[period_idx] = data
+
+    # Reshape to 2D
+    timetable_data = timetable_data.reshape((days_n, periods_n))
 
     # Plotting
-    plt.figure(figsize=(8, 6))
-
-    plt.axis("off")  # Turn off the axes
+    plt.figure(figsize=(10, 6))
 
     # Create the table
     table = plt.table(
@@ -46,11 +43,12 @@ def plot_timetable(timetable_dict, solution, save_path=None):
     for key, cell in table.get_celld().items():
         # key[0] represents the row index
         if key[0] > 0:  # Skip the header row
-            cell.set_height(0.22)  # Adjust height as needed
+            cell.set_height(0.21)  # height value
 
-    # Style the table
+    # Adjust column width
+    table.auto_set_column_width(range(periods_n))
     table.auto_set_font_size(True)
-    table.auto_set_column_width(range(periods_n))  # Adjust column width
+    plt.axis("off")
 
     if save_path:
         plt.savefig(save_path)
@@ -87,35 +85,36 @@ if __name__ == '__main__':
     timetable_dict = {
         'days': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
         'periods': ['8-10', '11-1', '1:45-3:45', '4-6'],
-        'day_period': ['Mon 8-10am', 'Mon 11-1pm', 'Mon 1:45-3:45pm', 'Mon 4-6pm',
-                       'Tue 8-10am', 'Tue 11-1pm', 'Tue 1:45-3:45pm', 'Tue 4-6pm',
-                       'Wed 8-10am', 'Wed 11-1pm', 'Wed 1:45-3:45pm', 'Wed 4-6pm',
-                       'Thu 8-10am', 'Thu 11-1pm', 'Thu 1:45-3:45pm', 'Thu 4-6pm',
-                       'Fri 8-10am', 'Fri 11-1pm', 'Fri 1:45-3:45pm', 'Fri 4-6pm',
+        'day_period': ['Mon 8-10', 'Mon 11-1', 'Mon 1:45-3:45', 'Mon 4-6',
+                       'Tue 8-10', 'Tue 11-1', 'Tue 1:45-3:45', 'Tue 4-6',
+                       'Wed 8-10', 'Wed 11-1', 'Wed 1:45-3:45', 'Wed 4-6',
+                       'Thu 8-10', 'Thu 11-1', 'Thu 1:45-3:45', 'Thu 4-6',
+                       'Fri 8-10', 'Fri 11-1', 'Fri 1:45-3:45', 'Fri 4-6',
                        ],
-        
+
         # (course, students taking it) tuple
         # GROUP A: CSC, CBS, DTS
         # GROUP B: ITC, SWE, INS
-        'courses': {0: ('ITC2203', 'ITC', 'INS'),
-                    1: ('GEN2203', 'ALL'),
-                    2: ('CYB2203', 'CBS'),
-                    3: ('CSC2303', 'GROUP B'),
-                    4: ('CSC2303', 'GROUP A'),
-                    5: ('GEN2201', 'ALL'),
-                    6: ('MTH2301', 'GROUP A'),
-                    7: ('CSC2201', 'CSC'),
-                    8: ('CYB2301', 'CBS'),
-                    9: ('MTH2301', 'GROUP B'),
-                    10: ('DTS2303', 'DTS'),
-                    11: ('SWE2305', 'SWE'),
-                    12: ('ITC2201', 'CSC', 'ITC', 'INS'),
-                    13: ('CSC2305', 'GROUP A'),
-                    14: ('CSC2305', 'GROUP B'),
-                    15: ('STA121', 'INS'),
-                    16: ('DTS2301', 'DTS'),
-                    17: ('INS2307', 'INS')
-                    }
+        'courses': {
+            0: ('ITC2203', 'ITC', 'INS'),
+            1: ('GEN2203', 'ALL'),
+            2: ('CYB2203', 'CBS'),
+            3: ('CSC2303', 'GROUP B'),
+            4: ('CSC2303', 'GROUP A'),
+            5: ('GEN2201', 'ALL'),
+            6: ('MTH2301', 'GROUP A'),
+            7: ('CSC2201', 'CSC'),
+            8: ('CYB2301', 'CBS'),
+            9: ('MTH2301', 'SWE'),
+            10: ('DTS2303', 'DTS'),
+            11: ('SWE2305', 'SWE'),
+            12: ('ITC2201', 'CSC', 'ITC', 'INS'),
+            13: ('CSC2305', 'GROUP A'),
+            14: ('CSC2305', 'GROUP B'),
+            15: ('STA121', 'INS'),
+            16: ('DTS2301', 'DTS'),
+            17: ('INS2307', 'INS')
+        }
     }
 
     # Project path
