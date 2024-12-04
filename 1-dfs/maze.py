@@ -31,13 +31,7 @@ class Maze:
         self.height = len(contents)  # Number of lines in the file
         self.width = max(len(line) for line in contents)  # Number of chars in the longest line
 
-        # Keep track of walls. Create a 2D list of bools to represent the places where
-        # there is a wall in the maze. True for walls, False otherwise.
-        # The maze is expected to be a rectangular maze, so IndexError will be risen when
-        # the length of the lines in the maze are not equal. In that case, False will
-        # be added to that row/line signifying an empty space. Generally, all short
-        # lines will be filled with empty spaces to match the length of the maze
-        # (i.e. the longest line) making the maze rectangular.
+        # Keep track of walls
         self.walls = []
         for i in range(self.height):
             row = []

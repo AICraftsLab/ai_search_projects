@@ -35,7 +35,8 @@ class Cell:
         inner_size = Cell.size - (Cell.border_width * 2)
         color = self.color if not is_current else 'green'  # Current cell color: green
         pygame.draw.rect(surface, color,
-                         (self.x + Cell.border_width, self.y + Cell.border_width, inner_size, inner_size))
+                         (self.x + Cell.border_width, self.y +
+                          Cell.border_width, inner_size, inner_size))
 
 
 # Define the MazeGame class to manage the maze and game logic
@@ -136,7 +137,7 @@ def run(filepath):
     clock = pygame.time.Clock()  # Clock to control fps
 
     # Create the "Solved" text to display when the goal is reached
-    solve_font = pygame.font.SysFont("sanscomic", int(maze_game.width / 4))
+    solve_font = pygame.font.SysFont("comicsans", int(maze_game.width / 5))
     solve_text = solve_font.render('Solved', 1, 'blue')
     solve_text_x = (maze_game.width / 2) - (solve_text.get_width() / 2)
     solve_text_y = (maze_game.height / 2) - (solve_text.get_height() / 2)

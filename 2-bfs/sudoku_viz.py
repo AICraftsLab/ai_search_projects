@@ -2,7 +2,7 @@ import copy
 import random
 import pygame
 from node import Node
-from frontier import StackFrontier
+from frontier import QueueFrontier
 from sudoku_gen import SudokuGenerator
 
 pygame.init()
@@ -152,7 +152,7 @@ class Cell:
     changeable_cell_color = 'green'
     nonchangeable_cell_color = 'dimgray'
     invalid_cell_color = 'red'
-    cell_num_font = pygame.font.SysFont("sanscomic", int(size / 1.5))
+    cell_num_font = pygame.font.SysFont("comicsans", int(size / 1.5))
 
     def __init__(self, number, row, col, changeable=False):
         #  Initializes a Cell instance
@@ -264,14 +264,14 @@ def run():
 
     # Initialize the Sudoku puzzle solver
     sudoku = Sudoku(sudoku_game.initial_state)
-    frontier = StackFrontier()
+    frontier = QueueFrontier()
     frontier.add(Node(sudoku_game.initial_state, None, None, 0))
 
     explored = []
     solved = False
 
     # Create font for "Solved" text
-    solve_font = pygame.font.SysFont("sanscomic", int(sudoku_game.width / 6))
+    solve_font = pygame.font.SysFont("comicsans", int(sudoku_game.width / 6))
     solve_text = solve_font.render('Solved', 1, 'blue')
     solve_text_x = (sudoku_game.width / 2) - (solve_text.get_width() / 2)
     solve_text_y = (sudoku_game.height / 2) - (solve_text.get_height() / 2)

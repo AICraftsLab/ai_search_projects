@@ -78,7 +78,7 @@ class Cell:
     border_width = 1
     q_color = 'green'  # Color of a queen
     attacked_q_color = 'red'  # Color of an attacked queen
-    queen_font = pygame.font.SysFont("sanscomic", int(size / 1.5))
+    queen_font = pygame.font.SysFont("comicsans", int(size / 1.5))
 
     def __init__(self, row, col, color):
         # Initializes a Cell instance
@@ -194,7 +194,7 @@ def run(n=5):
     solved = False
 
     # Create the "Solved" text to display when the goal is reached
-    solve_font = pygame.font.SysFont("sanscomic", int(nqueens_game.width / 4))
+    solve_font = pygame.font.SysFont("comicsans", int(nqueens_game.width / 4))
     solve_text = solve_font.render('Solved', 1, 'blue')
     solve_text_x = (nqueens_game.width / 2) - (solve_text.get_width() / 2)
     solve_text_y = (nqueens_game.height / 2) - (solve_text.get_height() / 2)

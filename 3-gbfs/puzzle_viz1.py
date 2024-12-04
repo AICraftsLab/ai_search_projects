@@ -128,7 +128,7 @@ class Tile:
     # Tiles size, border width, and font
     size = 80
     border_width = 2
-    tile_num_font = pygame.font.SysFont("sanscomic", int(size / 1.5))
+    tile_num_font = pygame.font.SysFont("comicsans", int(size / 1.5))
 
     def __init__(self, number, row, col):
         # Initialize the tile with a number and its position (row and col)
@@ -304,7 +304,7 @@ def run():
     clock = pygame.time.Clock()
 
     # Set up the 'Solved' text display
-    solve_font = pygame.font.SysFont("sanscomic", int(puzzle_game.width / 4))
+    solve_font = pygame.font.SysFont("comicsans", int(puzzle_game.width / 4))
     solve_text = solve_font.render('Solved', 1, 'blue')
     solve_text_x = (puzzle_game.width / 2) - (solve_text.get_width() / 2)
     solve_text_y = (puzzle_game.height / 2) - (solve_text.get_height() / 2)

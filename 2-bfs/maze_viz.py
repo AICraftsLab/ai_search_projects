@@ -328,7 +328,7 @@ def run(maze_filepath):
     fps = 5
 
     # Create font for "Solved" text
-    solve_font = pygame.font.SysFont("sanscomic", int(maze_game.width / 4))
+    solve_font = pygame.font.SysFont("comicsans", int(maze_game.width / 5))
     solve_text = solve_font.render('Solved', 1, 'blue')
     solve_text_x = (maze_game.width / 2) - (solve_text.get_width() / 2)
     solve_text_y = (maze_game.height / 2) - (solve_text.get_height() / 2)
