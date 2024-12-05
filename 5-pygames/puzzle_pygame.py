@@ -143,7 +143,7 @@ class PuzzleGame:
         # Return True if all tiles are in the correct position
         for i, row in enumerate(self.tiles):
             for j, tile in enumerate(row):
-                if not tile.number == solved_puzzle[i][j]:
+                if tile.number != solved_puzzle[i][j]:
                     return False
         return True
 
@@ -178,17 +178,18 @@ def run():
             # Exit if the window is closed
             if event.type == pygame.QUIT:
                 quit()
-
+            
             # Get the pressed key and move accordingly
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_UP]:
-                puzzle_game.slide('up')
-            elif keys[pygame.K_RIGHT]:
-                puzzle_game.slide('right')
-            elif keys[pygame.K_DOWN]:
-                puzzle_game.slide('down')
-            elif keys[pygame.K_LEFT]:
-                puzzle_game.slide('left')
+            if event.type == pygame.KEYDOWN:
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_UP]:
+                    puzzle_game.slide('up')
+                elif keys[pygame.K_RIGHT]:
+                    puzzle_game.slide('right')
+                elif keys[pygame.K_DOWN]:
+                    puzzle_game.slide('down')
+                elif keys[pygame.K_LEFT]:
+                    puzzle_game.slide('left')
 
         # Fill screen with black color
         surface.fill('black')

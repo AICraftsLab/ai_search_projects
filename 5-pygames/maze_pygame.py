@@ -150,15 +150,16 @@ def run(filepath):
                 quit()
 
             # Get the pressed key and move accordingly
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_UP]:
-                maze_game.move('up')
-            elif keys[pygame.K_RIGHT]:
-                maze_game.move('right')
-            elif keys[pygame.K_DOWN]:
-                maze_game.move('down')
-            elif keys[pygame.K_LEFT]:
-                maze_game.move('left')
+            if event.type == pygame.KEYDOWN:
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_UP]:
+                    maze_game.move('up')
+                elif keys[pygame.K_RIGHT]:
+                    maze_game.move('right')
+                elif keys[pygame.K_DOWN]:
+                    maze_game.move('down')
+                elif keys[pygame.K_LEFT]:
+                    maze_game.move('left')
 
         # Draw the maze and the current state
         maze_game.draw(surface)
