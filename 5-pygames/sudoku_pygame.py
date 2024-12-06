@@ -37,6 +37,10 @@ class Cell:
 
     def is_clicked(self, click_pos):
         # Check if the cell is clicked based on the click position
+        # If cell is non-changeable, return False
+        if not self.changeable:
+            return False
+        
         return self.rect.collidepoint(click_pos)
 
     def set_invalid(self, invalid):
