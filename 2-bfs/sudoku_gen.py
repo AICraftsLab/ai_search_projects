@@ -37,7 +37,7 @@ class SudokuGenerator:
         # Randomly set positions to zero based on complexity
         for i in range(self.grid_size):
             zero_num = random.randrange(min_zeros, max_zeros)
-            zero_positions = random.sample([x for x in range(self.grid_size)], k=zero_num)
+            zero_positions = random.sample(range(self.grid_size), k=zero_num)
 
             for j in range(self.grid_size):
                 if j in zero_positions:
