@@ -108,9 +108,9 @@ class Graph:
         self.vertices = len(self.graph_dict)
 
         # Vertices pos
-        self.vertices_pos = self._generate_vertices_pos()
+        self.vertices_pos = self.__generate_vertices_pos()
 
-    def _generate_vertices_pos(self):
+    def __generate_vertices_pos(self):
         """Generate vertices pos"""
         def divide_circle(radius, n):
             """Helper func to divide cycle into n points"""

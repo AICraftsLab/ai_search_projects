@@ -2,7 +2,7 @@ import random
 import matplotlib.pyplot as plt
 import os
 
-# Script version: Creating Graph from graph representation + random vertices pos
+# Script version: initial: random vertices pos
 
 # Problem global variables
 GENERATIONS = 1000
