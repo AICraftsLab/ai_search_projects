@@ -147,7 +147,7 @@ class City:
         self.name = name if name else f'City{idx}'
 
     def __repr__(self):
-        return self.idx
+        return str(self.idx)
 
 
 class Map:
